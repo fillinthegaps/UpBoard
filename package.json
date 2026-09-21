@@ -1,0 +1,12 @@
+{
+  "name": "up-board",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Up Board — showroom rep rotation tracker, self-hosted on Vercel.",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@vercel/kv": "^2.0.0"
+  }
+}
