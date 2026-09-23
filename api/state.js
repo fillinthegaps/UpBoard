@@ -42,18 +42,7 @@ module.exports = async function handler(req, res) {
     res.status(405).json({ error: "Method not allowed" });
   } catch (err) {
     console.error("api/state error:", err);
-    // TEMPORARY: surfacing the real error message and a few relevant env
-    // var presence flags to diagnose a setup issue. Safe to do short-term
-    // since this reveals no secret values, only which variables exist —
-    // but this should be reverted back to a generic message once the
-    // underlying problem is found and fixed.
-    res.status(500).json({
-      error: "Storage request failed",
-      debugMessage: err && err.message,
-      debugName: err && err.name,
-      hasKvUrl: !!process.env.KV_REST_API_URL,
-      hasKvToken: !!process.env.KV_REST_API_TOKEN,
-    });
+    res.status(500).json({ error: "Storage request failed" });
   }
 };
  
