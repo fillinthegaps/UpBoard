@@ -1,0 +1,3594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Up Board</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root{
+    --terracotta:#B85042;
+    --terracotta-dark:#8f3d33;
+    --sand:#EFEFE0;
+    --sage:#A7BEAE;
+    --dark:#3A2A25;
+    --muted:#8a7b74;
+    --line:#e4ded7;
+    --bg:#FBFAF6;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--dark);
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:20px 16px 60px;transition:max-width .15s ease;}
+  .wrap.wide{max-width:1100px;}
+  header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:12px;}
+  h1{font-size:22px;margin:0;font-weight:700;letter-spacing:-0.01em;}
+  .sub{font-size:13px;color:var(--muted);margin-top:2px;}
+  .who{font-size:13px;text-align:right;}
+  select{
+    font-family:inherit;font-size:13px;padding:6px 8px;border-radius:8px;
+    border:1px solid var(--line);background:#fff;color:var(--dark);
+  }
+  .location-bar{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:18px;
+  }
+  .location-bar .loc-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+  .location-bar select{font-size:14px;font-weight:600;border:none;background:transparent;padding:2px 0;}
+  .actions{display:flex;gap:10px;margin-bottom:10px;}
+  button{
+    font-family:inherit;cursor:pointer;border-radius:10px;border:1px solid transparent;
+    font-size:14px;font-weight:600;padding:12px 16px;transition:transform .08s ease;
+  }
+  button:active{transform:scale(.98);}
+  .btn-primary{background:var(--terracotta);color:#fff;flex:1;}
+  .btn-primary:hover{background:var(--terracotta-dark);}
+  .btn-secondary{background:#fff;color:var(--dark);border:1px solid var(--line);flex:1;}
+  .btn-secondary:hover{background:var(--sand);}
+  .btn-ghost{background:transparent;border:none;color:var(--muted);font-weight:500;font-size:12px;padding:4px 8px;}
+  .ghost-row{display:flex;justify-content:flex-end;gap:14px;margin-bottom:20px;}
+  section{margin-bottom:26px;}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin:0 0 10px;}
+  .rep-row{
+    display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;
+    background:var(--card);border:1px solid var(--line);margin-bottom:8px;
+  }
+  .rep-row.active{border-color:var(--terracotta);background:#fff6f4;}
+  .rep-row.out{opacity:.6;}
+  .rep-row.pending{opacity:.45;border-style:dashed;}
+  .rep-row.busy{background:#f4f7f5;border-color:var(--sage);}
+  .rep-row.busy.overdue{border-color:#378add;border-width:2px;animation:pulseBorder 2s ease-in-out infinite;}
+  @keyframes pulseBorder{
+    0%, 100% { box-shadow: 0 0 0 0 rgba(55,138,221,0.35); }
+    50% { box-shadow: 0 0 0 4px rgba(55,138,221,0.15); }
+  }
+  .badge{
+    width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:#fff;background:var(--sage);flex-shrink:0;
+  }
+  .rep-row.active .badge{background:var(--terracotta);}
+  .rep-name{font-size:14px;font-weight:600;}
+  .rep-meta{font-size:12px;color:var(--muted);margin-top:1px;}
+  .rep-side{margin-left:auto;text-align:right;}
+  .step-btn{
+    font-size:11px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);
+    background:#fff;color:var(--dark);font-weight:600;
+  }
+  .step-btn.stepped-out{background:var(--terracotta);color:#fff;border-color:var(--terracotta);}
+  .log-entry{
+    padding:10px 12px;border-radius:10px;background:var(--card);border:1px solid var(--line);margin-bottom:6px;
+  }
+  .log-top{display:flex;justify-content:space-between;font-size:13px;}
+  .log-client{font-weight:600;}
+  .log-time{color:var(--muted);font-size:11px;}
+  .log-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+  .tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px;}
+  .tag-new{background:#e7f2e6;color:#3c6b3c;}
+  .tag-returning{background:#e6eef7;color:#2f5680;}
+  .tag-coverage{background:var(--sand);color:var(--terracotta-dark);}
+  .tag-trade{background:#eee6f7;color:#6b4a94;}
+  .tag-appointment{background:#dcefe6;color:#1d6b4a;}
+  .tag-handoff{background:#e3ecf7;color:#2a5090;}
+  .tag-loc{background:var(--dark);color:#fff;}
+  .empty{font-size:13px;color:var(--muted);padding:16px;text-align:center;background:var(--card);border:1px dashed var(--line);border-radius:10px;}
+
+  .overlay{
+    position:fixed;inset:0;background:rgba(58,42,37,.45);display:flex;align-items:flex-end;justify-content:center;
+    z-index:50;overflow-y:auto;padding:20px 0;
+  }
+  @media (min-width:520px){.overlay{align-items:center;}}
+  .alert-overlay{
+    position:fixed;inset:0;background:rgba(58,42,37,.55);display:flex;align-items:center;justify-content:center;
+    z-index:100;padding:20px;
+  }
+  .alert-box{
+    background:#fff;border-radius:16px;padding:20px;width:100%;max-width:340px;
+  }
+  .alert-box p{font-size:14px;color:var(--dark);margin:0 0 18px;line-height:1.5;}
+  .alert-box .modal-actions{margin-top:0;}
+  .modal{
+    background:#fff;border-radius:16px 16px 0 0;padding:22px 20px 26px;width:100%;max-width:420px;
+    max-height:88vh;overflow-y:auto;
+  }
+  .modal.wide{max-width:680px;}
+  @media (min-width:520px){.modal{border-radius:16px;}}
+  .modal h3{margin:0 0 4px;font-size:17px;}
+  .modal .hint{font-size:12px;color:var(--muted);margin-bottom:16px;}
+  label{display:block;font-size:12px;font-weight:600;color:var(--dark);margin:12px 0 5px;}
+  input[type=text],input[type=time],select.full,textarea{
+    width:100%;font-family:inherit;font-size:14px;padding:10px;border-radius:8px;
+    border:1px solid var(--line);background:#fdfcfa;
+  }
+  textarea{resize:vertical;min-height:60px;}
+  .radio-row{display:flex;gap:8px;}
+  .radio-opt{
+    flex:1;padding:9px;text-align:center;border-radius:8px;border:1px solid var(--line);
+    font-size:13px;cursor:pointer;user-select:none;
+  }
+  .radio-opt.picked{border-color:var(--terracotta);background:#fff6f4;color:var(--terracotta-dark);font-weight:600;}
+  .checkbox-row{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;}
+  .modal-actions{display:flex;gap:10px;margin-top:20px;}
+  .footer-note{font-size:11px;color:var(--muted);text-align:center;margin-top:28px;line-height:1.5;}
+  .manage-row{
+    display:flex;align-items:center;justify-content:space-between;padding:9px 10px;
+    border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:13px;background:#fdfcfa;
+  }
+  .remove-x{background:none;border:none;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:2px 6px;font-weight:400;}
+  .remove-x:hover{color:var(--terracotta);}
+  .add-row{display:flex;gap:8px;margin-top:14px;}
+  .add-row input{flex:1;}
+  .add-row button{padding:10px 14px;}
+
+  .dash-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+  @media (min-width:560px){.dash-grid{grid-template-columns:1fr 1fr;}}
+  .dash-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fdfcfa;}
+  .dash-card h4{margin:0 0 2px;font-size:15px;}
+  .dash-card .dash-sub{font-size:11px;color:var(--muted);margin-bottom:10px;}
+  .stat-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line);}
+  .stat-row:last-child{border-bottom:none;}
+  .stat-label{color:var(--muted);}
+  .stat-val{font-weight:600;}
+  .dash-upnext{
+    background:#fff6f4;border:1px solid var(--terracotta);border-radius:8px;padding:8px 10px;margin-top:10px;font-size:13px;
+  }
+  .ai-card{background:#fdfcfa;border:0.5px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:16px;}
+  .ai-card-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:14px;font-weight:700;}
+  .ai-chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .ai-chip{font-size:11px;padding:5px 10px;border:0.5px solid var(--line);border-radius:20px;background:#fff;color:var(--muted);cursor:pointer;}
+  .ai-answer-box{background:var(--sand);border-radius:8px;padding:10px 12px;margin-top:8px;}
+  .ai-answer-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:11px;color:var(--muted);}
+  .ai-loc-toggle{display:flex;gap:6px;margin-bottom:10px;}
+  .ai-loc-pill{font-size:11px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;font-weight:600;}
+  .ai-loc-pill.picked{background:var(--terracotta);border-color:var(--terracotta);color:#fff;}
+  .split-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fdfcfa;}
+  .status-grid-section{margin-bottom:22px;}
+  .status-grid-section h4{font-size:15px;margin:0 0 10px;}
+  .status-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;}
+  .status-tile{border-radius:12px;padding:12px;text-align:center;border:1px solid transparent;}
+  .status-tile .tile-name{font-size:14px;font-weight:600;margin:0 0 3px;}
+  .status-tile .tile-meta{font-size:11px;margin:0;}
+  .tile-active{background:#eaf3de;border-color:#c0dd97;}
+  .tile-active .tile-name,.tile-active .tile-meta{color:#3b6d11;}
+  .tile-busy{background:#e6f1fb;border-color:#85b7eb;}
+  .tile-busy .tile-name,.tile-busy .tile-meta{color:#0c447c;}
+  .tile-out{background:#faeeda;border-color:#ef9f27;}
+  .tile-out .tile-name,.tile-out .tile-meta{color:#854f0b;}
+  .tile-pending{background:#f1efe8;border-color:#d3d1c7;opacity:.75;}
+  .tile-pending .tile-name,.tile-pending .tile-meta{color:#5f5e5a;}
+  .status-legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:18px;font-size:12px;color:var(--muted);}
+  .status-legend span{display:flex;align-items:center;gap:5px;}
+  .status-legend .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .action-group{border-radius:12px;padding:12px;margin-bottom:10px;}
+  .action-group.group-helping{background:#eaf3de;}
+  .action-group.group-away{background:#faeeda;}
+  .action-group-header{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:13px;font-weight:700;}
+  .group-helping .action-group-header{color:#3b6d11;}
+  .group-away .action-group-header{color:#854f0b;}
+  .action-group-sub{font-size:11px;margin:-4px 0 8px;}
+  .group-helping .action-group-sub{color:#3b6d11;}
+  .group-away .action-group-sub{color:#854f0b;}
+  .action-group-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .group-btn{background:#fff;border:0.5px solid var(--line);border-radius:var(--radius);padding:10px 8px;font-size:12.5px;font-weight:600;color:var(--dark);text-align:center;}
+  .group-btn:disabled{opacity:.45;cursor:not-allowed;}
+  .state-card{border-radius:12px;padding:18px 16px;text-align:center;margin-bottom:14px;}
+  .state-card.dashed{border:1.5px dashed #b4b2a9;background:#f1efe8;}
+  .state-card.busy{background:#e6f1fb;border:1px solid #378add;}
+  .state-card p.state-title{font-size:14px;font-weight:700;margin:0 0 2px;color:var(--dark);}
+  .state-card p.state-sub{font-size:12px;color:var(--muted);margin:0 0 12px;}
+  .manager-tools{background:var(--sand);border-radius:12px;padding:12px;margin-bottom:20px;}
+  .manager-tools-header{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;font-weight:700;color:var(--muted);}
+  .manager-tools-grid{display:flex;flex-wrap:wrap;gap:6px;}
+  .tool-pill{font-size:11px;padding:6px 12px;border:0.5px solid var(--line);border-radius:20px;background:#fff;color:var(--dark);font-weight:600;}
+  .split-card h4{margin:0 0 12px;font-size:16px;}
+  .split-card h5{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:14px 0 8px;}
+  .split-card .rep-row, .split-card .log-entry{margin-bottom:6px;}
+  .report-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .report-controls > div{flex:1;min-width:130px;}
+  .report-controls label{margin:0 0 4px;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px;}
+  .kpi-card{background:var(--sand);border-radius:10px;padding:12px;}
+  .kpi-card .kpi-label{font-size:11px;color:var(--muted);margin:0 0 4px;}
+  .kpi-card .kpi-val{font-size:20px;font-weight:700;margin:0;}
+  .chart-title{font-size:13px;font-weight:600;margin:0 0 8px;}
+  .chart-legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-bottom:6px;}
+  .chart-legend span{display:flex;align-items:center;gap:4px;}
+  .legend-dot{width:9px;height:9px;border-radius:2px;display:inline-block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>Up board</h1>
+      <div class="sub" id="dateLine"></div>
+    </div>
+    <div class="who">
+      <label style="margin:0 0 4px;display:block;">I am</label>
+      <select id="whoAmI"></select>
+    </div>
+  </header>
+
+  <div id="upNextBanner" style="display:none;background:var(--sand);border:1px solid var(--terracotta);border-radius:10px;padding:10px 12px;margin-bottom:14px;text-align:center;">
+    <p style="font-size:14px;font-weight:700;color:var(--terracotta-dark);margin:0;" id="upNextText"></p>
+  </div>
+
+  <div id="crossNotifyBanner" style="display:none;background:var(--sand);border:1px solid var(--terracotta);border-radius:10px;padding:10px 12px;margin-bottom:14px;cursor:pointer;">
+    <p style="font-size:13px;font-weight:600;color:var(--terracotta-dark);margin:0;" id="crossNotifyText"></p>
+  </div>
+
+  <div id="onDeckBanner" style="display:none;background:#eaf3de;border:1px solid #97c459;border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+    <p style="font-size:13px;font-weight:600;color:#3b6d11;margin:0;" id="onDeckText"></p>
+  </div>
+
+  <div id="stillWithClientBanner" style="display:none;background:#e6f1fb;border:1px solid #378add;border-radius:10px;padding:10px 12px;margin-bottom:14px;cursor:pointer;">
+    <p style="font-size:13px;font-weight:600;color:#0c447c;margin:0;" id="stillWithClientText"></p>
+    <p style="font-size:11px;color:#0c447c;margin:2px 0 0;">Tap here if you're done — or use the button below.</p>
+  </div>
+
+  <div id="retentionBanner" style="display:none;background:#fff6f4;border:1px solid var(--terracotta);border-radius:10px;padding:10px 12px;margin-bottom:14px;cursor:pointer;">
+    <p style="font-size:13px;font-weight:600;color:var(--terracotta-dark);margin:0;" id="retentionText"></p>
+    <p style="font-size:11px;color:var(--terracotta-dark);margin:2px 0 0;">Tap to export CSV now (manager code required).</p>
+  </div>
+
+  <div class="location-bar">
+    <div>
+      <div class="loc-label">Location</div>
+      <select id="locationSelector"></select>
+    </div>
+  </div>
+
+  <div id="normalModeActions">
+
+  <div id="noSelfState" class="state-card dashed" style="display:none;">
+    <i class="ti ti-user-question" style="font-size:22px;color:var(--muted);"></i>
+    <p class="state-title">Select your name</p>
+    <p class="state-sub">Choose yourself in "I am" above to get started.</p>
+  </div>
+
+  <div id="checkInState" class="state-card dashed" style="display:none;">
+    <i class="ti ti-door-enter" style="font-size:22px;color:var(--muted);"></i>
+    <p class="state-title">You haven't checked in yet</p>
+    <p class="state-sub">Check in to join the rotation.</p>
+    <button class="btn-primary" id="checkInBigBtn" style="width:100%;">Check in</button>
+  </div>
+
+  <div id="withClientState" class="state-card busy" style="display:none;">
+    <i class="ti ti-user-check" style="font-size:22px;color:#0c447c;"></i>
+    <p class="state-title" style="color:#0c447c;" id="withClientStateText">With a client</p>
+    <button class="btn-primary" id="doneWithClientBigBtn" style="width:100%;">Done with client</button>
+  </div>
+
+  <div id="backInState" class="state-card dashed" style="display:none;">
+    <p class="state-title">Stepped out</p>
+    <button class="btn-primary" id="backInBigBtn" style="width:100%;">Back in</button>
+  </div>
+
+  <div id="activeGroupsState" style="display:none;">
+    <div class="action-group group-helping">
+      <div class="action-group-header"><i class="ti ti-user-check" style="font-size:16px;"></i>Helping a client</div>
+      <div class="action-group-sub">You're about to work with someone.</div>
+      <div class="action-group-grid">
+        <button class="group-btn" id="takeUpBtn">Take next up</button>
+        <button class="group-btn" id="logAppointmentBtn">Log appointment</button>
+        <button class="group-btn" id="coverUpBtn">Cover this up</button>
+        <button class="group-btn" id="skipTurnBtn">Skip my turn</button>
+      </div>
+    </div>
+    <div class="action-group group-away">
+      <div class="action-group-header"><i class="ti ti-door-exit" style="font-size:16px;"></i>Away from the floor</div>
+      <div class="action-group-sub">You're not with a client right now.</div>
+      <div class="action-group-grid">
+        <button class="group-btn" id="stepBtn" style="grid-column:1 / -1;">Step out</button>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <div id="pausedModeActions" style="display:none;margin-bottom:20px;">
+    <div style="background:#fff6f4;border:1px solid var(--terracotta);border-radius:10px;padding:12px;margin-bottom:10px;">
+      <p style="font-size:13px;color:var(--terracotta-dark);margin:0;font-weight:600;">Rotation paused</p>
+      <p style="font-size:12px;color:var(--terracotta-dark);margin:4px 0 0;">Turn order isn't being enforced right now. Log clients as you help them — a manager will resume and resequence the line when things calm down.</p>
+    </div>
+    <button class="btn-primary" id="freeLogBtn" style="width:100%;">Log a client</button>
+  </div>
+
+  <div style="margin-bottom:14px;">
+    <button class="tool-pill" id="samplesOutBtn" style="width:100%;text-align:center;padding:11px;font-size:13px;"><i class="ti ti-package" style="font-size:15px;vertical-align:-2px;margin-right:6px;"></i><span id="samplesOutBtnLabel">Samples out</span></button>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <button class="tool-pill" id="managerToolsBtn" style="width:100%;text-align:center;padding:10px;"><i class="ti ti-lock" style="font-size:13px;vertical-align:-2px;margin-right:6px;"></i>Manager tools</button>
+  </div>
+
+  <div id="singleView">
+  <section>
+    <h2>Rotation</h2>
+    <div id="rotationList"></div>
+  </section>
+
+  <section>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;">
+      <h2 style="margin-bottom:0;">Today's log</h2>
+      <div>
+        <button class="btn-ghost" id="pastClientNotesBtn" style="padding:2px 4px;display:none;">Past client notes</button>
+        <button class="btn-ghost" id="logHistoryBtn" style="padding:2px 4px;">View past days</button>
+      </div>
+    </div>
+    <div id="logList"></div>
+  </section>
+  </div>
+
+  <div id="splitView" style="display:none;">
+    <div style="text-align:right;margin-bottom:10px;">
+      <button class="btn-ghost" id="backToSingleBtn">← Back to single view</button>
+    </div>
+    <div class="dash-grid" id="splitBody"></div>
+  </div>
+
+  <div id="statusGridView" style="display:none;">
+    <div style="text-align:right;margin-bottom:10px;">
+      <button class="btn-ghost" id="backToSingleFromGridBtn">← Back to single view</button>
+    </div>
+    <div class="status-legend">
+      <span><span class="dot" style="background:#97c459;"></span>Available</span>
+      <span><span class="dot" style="background:#378add;"></span>With a client</span>
+      <span><span class="dot" style="background:#ef9f27;"></span>Stepped out</span>
+      <span><span class="dot" style="background:#b4b2a9;"></span>Not checked in / done for day</span>
+    </div>
+    <div id="statusGridBody"></div>
+  </div>
+
+  <div id="renderErrorIndicator" style="display:none;text-align:center;margin-top:12px;">
+    <button class="btn-ghost" id="renderErrorBtn" style="font-size:11px;color:var(--terracotta-dark);">⚠ A display error was caught — tap for details</button>
+  </div>
+
+  <div class="footer-note">Shared board — visible to everyone using this link.<br>Data is saved automatically as it changes.</div>
+</div>
+
+<div id="modalRoot"></div>
+<div id="alertRoot"></div>
+
+<script>
+// ---- Locations & rosters ----
+const LOCATIONS = [
+  { id: "aventura", name: "Aventura" },
+  { id: "boca", name: "Boca" }
+];
+const LOCATION_DEFAULT_REPS = {
+  aventura: ["Leandro O.","Mauricio M.","Luca B.","Raul R.","Dorita H.","Sherm M."],
+  boca: ["Sara K.","Vladimir Y.","Sherm M."]
+};
+const MANAGER_PIN = "4517"; // change this to whatever code the manager wants
+const UP_LOCK_TIMEOUT_MS = 5 * 60 * 1000; // if a "take next up" is left open this long, treat the lock as stale
+const COVERAGE_STALE_MINUTES = 45; // flag a coverage session as unusually long past this many minutes
+const LOG_RETENTION_DAYS = 90; // client log, skip log, and cross-location notes older than this get cleared out automatically
+const RETENTION_REMINDER_LEAD_DAYS = 2; // start warning this many days before the oldest data would get cleared
+const TRAFFIC_AI_CONTEXT_DAYS = 7; // "Ask the board" and "Weekly summary" only look this far back, independent of LOG_RETENTION_DAYS — keeps those answers fast, focused, and actually "weekly" even as raw log history is kept much longer for export/trend-viewing
+const EDIT_WINDOW_HOURS = 48; // reps can edit their own entries within this many hours of logging them
+const WITH_CLIENT_REMINDER_MIN = 20; // nudge a rep to tap "Done with client" after this many minutes
+const AUTO_RESET_HOUR = 21;   // 24-hour clock — 21 = 9:00 PM. Change to whatever end-of-day time you want.
+const AUTO_RESET_MINUTE = 0;
+const AUTO_CHECKOUT_HOUR = 18; // showroom closing time
+const AUTO_CHECKOUT_MINUTE = 0;
+const AUTO_CHECKOUT_GRACE_MINUTES = 15; // sweep runs this many minutes after closing, not right at the boundary —
+// gives anyone mid-transaction right at closing time room to finish before the automatic check runs at all
+const TRADE_SAMPLE_REMINDER_DAYS = 7; // trade sample loans are open-ended — flag as a reminder after this many days out
+
+// ---- Storage layer: calls this app's own /api/state serverless function
+// (backed by Vercel KV) for shared, cross-device data. Falls back to this
+// browser's localStorage if the server can't be reached, so a device stays
+// usable — just temporarily out of sync — during an outage. ----
+let syncBroken = false;
+
+function showSyncWarning(){
+  if(document.getElementById("syncWarningBanner")) return;
+  const note = document.createElement("div");
+  note.id = "syncWarningBanner";
+  note.style.cssText = "background:#fff6f4;border:1px solid var(--terracotta);color:var(--terracotta-dark);font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:14px;";
+  note.textContent = "Sync issue: this device can't reach the shared server right now. What you're seeing may be temporarily out of date — avoid adding, removing, or editing reps until this clears, since those changes may not save to the shared board. It should recover on its own shortly.";
+  const wrap = document.querySelector(".wrap");
+  wrap.insertBefore(note, wrap.firstChild);
+}
+
+function clearSyncWarning(){
+  if(!syncBroken) return;
+  syncBroken = false;
+  const banner = document.getElementById("syncWarningBanner");
+  if(banner) banner.remove();
+}
+
+// Races any promise against a timeout, converting a call that hangs
+// forever (never resolves or rejects — a real risk with flaky networks or
+// platform issues) into a clean, catchable failure instead of freezing the
+// whole app indefinitely waiting on it.
+function withTimeout(promise, ms, label){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(()=>reject(new Error(`${label||'Request'} timed out`)), ms))
+  ]);
+}
+
+async function storageGet(key, shared){
+  // Per-device preferences (last name used, last location, this device's
+  // token) were never meant to sync between people — only the shared
+  // rotation state needs the real cross-device store.
+  if(!shared){
+    const raw = localStorage.getItem("upboard::"+key);
+    return raw ? { key, value: raw, shared } : null;
+  }
+  for(let attempt=0; attempt<2; attempt++){
+    try{
+      const res = await withTimeout(fetch("/api/state?key="+encodeURIComponent(key)), 10000, "Storage get");
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      const data = await res.json();
+      clearSyncWarning();
+      if(data.value == null) return null; // call succeeded — genuinely no data yet, trustworthy
+      return { key, value: data.value, shared };
+    }catch(e){
+      if(attempt===0) continue; // one quick retry in case it was transient
+      console.error("Storage get failed after retry", e);
+    }
+  }
+  // both attempts genuinely FAILED — this is NOT the same as confirming
+  // the data doesn't exist. Falling back to a local cache is fine, but if
+  // there's no cache either, we must not let the caller treat this as
+  // "nothing here yet" — that previously caused real data to be silently
+  // overwritten with fresh defaults whenever a fetch merely failed.
+  syncBroken = true;
+  showSyncWarning();
+  const raw = localStorage.getItem("upboard::"+key);
+  if(raw) return { key, value: raw, shared };
+  throw new Error("STORAGE_UNAVAILABLE");
+}
+
+async function storageSet(key, value, shared){
+  if(!shared){
+    localStorage.setItem("upboard::"+key, value);
+    return { key, value, shared };
+  }
+  for(let attempt=0; attempt<2; attempt++){
+    try{
+      const res = await withTimeout(fetch("/api/state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value })
+      }), 10000, "Storage set");
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      clearSyncWarning();
+      return { key, value, shared };
+    }catch(e){
+      if(attempt===0) continue; // one quick retry in case it was transient
+      console.error("Storage set failed after retry", e);
+    }
+  }
+  // both attempts failed — fall back to local so this device keeps working
+  syncBroken = true;
+  showSyncWarning();
+  localStorage.setItem("upboard::"+key, value);
+  return { key, value, shared, local: true };
+}
+
+
+function storageKey(locationId){ return "rotation_state__" + locationId; }
+
+function defaultStateForLocation(locationId){
+  const names = LOCATION_DEFAULT_REPS[locationId] || [];
+  return {
+    reps: names.map((name,i)=>({
+      id: "r"+i+"_"+Date.now()+"_"+i,
+      name,
+      order: null,
+      status: "not_checked_in",
+      reason: null,
+      expectedReturn: null,
+      arrivalTime: null,
+      checkedInAt: null,
+      upsToday: 0,
+      lastUpTaken: null,
+      checkedInDeviceId: null,
+      activeCoverageLogId: null
+    })),
+    log: [],
+    skipLog: [],
+    crossLocationNotes: [],
+    samplesOut: [],
+    lastResetPeriod: null,
+    lastCheckoutPeriod: null,
+    upLock: null,
+    rotationPaused: false
+  };
+}
+
+// Returns a date-string key identifying which "business day" `now` belongs to,
+// where each day's period runs from AUTO_RESET_HOUR:MINUTE until the same
+// time the next day. Crossing that threshold moves you into a new period.
+// Formats a Date as YYYY-MM-DD using LOCAL date components — never use
+// toISOString() for this, since that converts to UTC first and can silently
+// shift the date by a day in the evening for any timezone behind UTC.
+function localDateStr(date){
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const d = String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+function getPeriodKey(now){
+  const thresholdToday = new Date(now);
+  thresholdToday.setHours(AUTO_RESET_HOUR, AUTO_RESET_MINUTE, 0, 0);
+  const periodDate = new Date(now);
+  if(now < thresholdToday){
+    periodDate.setDate(periodDate.getDate() - 1);
+  }
+  return localDateStr(periodDate);
+}
+
+// Mutates state in place if closing time has passed today and this hasn't
+// run yet today — anyone still active/with-client/out (i.e. forgot to check
+// out or step out themselves) gets moved to checked_out automatically, so
+// they don't keep showing as available or busy on the live dashboard for
+// hours after the showroom has actually closed, just because the full
+// day-reset (a separate, later threshold) hasn't fired yet.
+function applyAutoCheckoutIfDue(s, now = new Date()){
+  const thresholdToday = new Date(now);
+  thresholdToday.setHours(AUTO_CHECKOUT_HOUR, AUTO_CHECKOUT_MINUTE, 0, 0);
+  thresholdToday.setMinutes(thresholdToday.getMinutes() + AUTO_CHECKOUT_GRACE_MINUTES);
+  if(now < thresholdToday) return false; // still within the grace window after closing
+  const todayKey = localDateStr(now);
+  if(s.lastCheckoutPeriod === todayKey) return false; // already handled today
+  s.reps.forEach(r=>{
+    // deliberately excludes "with_client" — someone actively helping a
+    // customer past closing time is doing real, legitimate work and must
+    // never be disrupted by an automatic process, no matter how late it runs.
+    // Only reps who are simply available (active) or stepped away (out),
+    // with nothing actually in progress, get swept.
+    if(r.status==="active" || r.status==="out"){
+      r.status = "checked_out";
+      r.order = null;
+      r.reason = null;
+      r.expectedReturn = null;
+      r.checkedInAt = null;
+      r.activeCoverageLogId = null;
+      r.checkedInDeviceId = null;
+    }
+  });
+  s.lastCheckoutPeriod = todayKey;
+  return true;
+}
+
+// Mutates state in place if the auto-reset threshold has been crossed since
+// the last time this location was reset. Returns true if it made a change.
+function applyAutoResetIfDue(s){
+  const currentPeriod = getPeriodKey(new Date());
+  if(s.lastResetPeriod === currentPeriod) return false;
+  s.reps.forEach(r=>{
+    r.status = "not_checked_in";
+    r.order = null;
+    r.reason = null;
+    r.expectedReturn = null;
+    r.checkedInAt = null;
+    r.activeCoverageLogId = null;
+    r.checkedInDeviceId = null;
+  });
+  s.rotationPaused = false;
+  s.lastResetPeriod = currentPeriod;
+  return true;
+}
+
+function pruneOldLogs(s){
+  const cutoff = Date.now() - (LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  let changed = false;
+
+  const newLog = s.log.filter(e => e.time >= cutoff);
+  if(newLog.length !== s.log.length){ s.log = newLog; changed = true; }
+
+  const newSkipLog = (s.skipLog||[]).filter(e => e.time >= cutoff);
+  if(newSkipLog.length !== (s.skipLog||[]).length){ s.skipLog = newSkipLog; changed = true; }
+
+  const newCrossNotes = (s.crossLocationNotes||[]).filter(e => e.time >= cutoff);
+  if(newCrossNotes.length !== (s.crossLocationNotes||[]).length){ s.crossLocationNotes = newCrossNotes; changed = true; }
+
+  return changed;
+}
+
+let currentLocationId = LOCATIONS[0].id;
+let preferredRepId = null; // remembers who checked in on this specific device/screen
+let deviceToken = null; // this device's private identity, used to lock a checked-in rep to the device that checked them in
+let pendingLocalWrite = false; // true while this device's own save() is in flight
+let lastLocalWriteAt = 0; // timestamp this device last finished saving its own change
+let state = null;
+
+async function loadLocationState(locationId){
+  let s = null;
+  let fetchFailed = false;
+  try{
+    const res = await storageGet(storageKey(locationId), true);
+    if(res && res.value){
+      s = JSON.parse(res.value);
+    }
+    // if res is null/empty here, the call SUCCEEDED and genuinely confirmed
+    // there's no data yet for this location — safe to treat as brand new.
+  }catch(e){
+    // the fetch itself failed (see storageGet) — we do NOT know whether real
+    // data exists. Never persist a fresh default in this case; that would
+    // silently overwrite a real roster/log with the hardcoded starting point
+    // the moment a single fetch had a transient failure.
+    fetchFailed = true;
+  }
+  if(!s && fetchFailed){
+    return defaultStateForLocation(locationId); // used only in-memory for this render, never saved
+  }
+  if(!s){
+    s = defaultStateForLocation(locationId);
+    await storageSet(storageKey(locationId), JSON.stringify(s), true);
+    return s;
+  }
+  const checkoutChanged = applyAutoCheckoutIfDue(s);
+  const resetChanged = applyAutoResetIfDue(s);
+  const prunedChanged = pruneOldLogs(s);
+  if(checkoutChanged || resetChanged || prunedChanged){
+    await storageSet(storageKey(locationId), JSON.stringify(s), true);
+  }
+  return s;
+}
+
+async function saveState(){
+  // Guard against the periodic poll racing this exact write: a GET already
+  // in flight when this save starts can resolve AFTER this save finishes,
+  // carrying stale pre-save data that would otherwise clobber the change
+  // this device just made (e.g. a check-in reverting itself moments after
+  // it worked). pendingLocalWrite blocks a poll from starting while this
+  // save is in flight; the cooldown after it blocks one that was already
+  // in flight and is still landing.
+  pendingLocalWrite = true;
+  try{
+    await storageSet(storageKey(currentLocationId), JSON.stringify(state), true);
+  }catch(e){ console.error("Storage error", e); }
+  finally{
+    pendingLocalWrite = false;
+    lastLocalWriteAt = Date.now();
+  }
+}
+
+async function switchLocation(locationId){
+  currentLocationId = locationId;
+  state = await loadLocationState(locationId);
+  try{ await storageSet("preferred_location", locationId, false); }catch(e){}
+  render();
+}
+
+function formatDuration(totalSec){
+  const m = Math.floor(totalSec/60);
+  const s = totalSec%60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function withClientStartFor(rep, log){
+  if(rep.activeCoverageLogId){
+    const entry = log.find(e=>e.id===rep.activeCoverageLogId);
+    if(entry && entry.coverageStart) return entry.coverageStart;
+  }
+  return rep.lastUpTaken || null;
+}
+
+function liveTimerSpan(startTs){
+  if(!startTs) return "";
+  const elapsedSec = Math.max(0, Math.floor((Date.now()-startTs)/1000));
+  return `<span data-timer-start="${startTs}">${formatDuration(elapsedSec)}</span>`;
+}
+
+function tickLiveTimers(){
+  safeRun("liveTimers", ()=>{
+    document.querySelectorAll('[data-timer-start]').forEach(el=>{
+      const start = parseInt(el.dataset.timerStart, 10);
+      if(!start) return;
+      const elapsedSec = Math.max(0, Math.floor((Date.now()-start)/1000));
+      el.textContent = formatDuration(elapsedSec);
+    });
+  });
+  safeRun("stillWithClientBanner", updateStillWithClientBanner);
+  safeRun("samplesOutBadgeTick", updateSamplesOutBadge);
+}
+
+function canEditEntry(entry, repName){
+  if(!entry || entry.rep !== repName) return false;
+  return (Date.now() - entry.time) <= (EDIT_WINDOW_HOURS * 60 * 60 * 1000);
+}
+
+function fmtTime(ts){
+  if(!ts) return "";
+  return new Date(ts).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+}
+
+function isToday(ts){
+  const d = new Date(ts);
+  const n = new Date();
+  return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth() && d.getDate()===n.getDate();
+}
+
+function todaysEntries(logArr){
+  return logArr.filter(e=>isToday(e.time));
+}
+
+function isLockActive(s){
+  if(!s.upLock) return false;
+  return (Date.now() - s.upLock.startedAt) < UP_LOCK_TIMEOUT_MS;
+}
+
+function activeSorted(){
+  return state.reps.filter(r=>r.status==="active").sort((a,b)=>a.order-b.order);
+}
+
+let lastRenderError = null;
+
+function logRenderError(section, err){
+  lastRenderError = { section, message: (err && err.message) || String(err), time: Date.now() };
+  console.error(`Render error in ${section}:`, err);
+  const indicator = document.getElementById("renderErrorIndicator");
+  if(indicator) indicator.style.display = "block";
+}
+
+function safeRun(section, fn){
+  try{ fn(); }catch(err){ logRenderError(section, err); }
+}
+
+function render(){
+  safeRun("header", ()=>{
+    document.getElementById("dateLine").textContent = new Date().toLocaleDateString([], {weekday:'long', month:'short', day:'numeric'})
+      + " · " + (LOCATIONS.find(l=>l.id===currentLocationId)||{}).name;
+
+    const locSel = document.getElementById("locationSelector");
+    locSel.innerHTML = LOCATIONS.map(l=>`<option value="${l.id}" ${l.id===currentLocationId?'selected':''}>${l.name}</option>`).join("");
+  });
+
+  safeRun("whoAmI", ()=>{
+    const whoSel = document.getElementById("whoAmI");
+    const repSignature = state.reps.map(r=>`${r.id}:${r.name}:${r.status}:${r.checkedInDeviceId||''}`).join("|");
+    const isLockedElsewhere = (r)=> r && (r.status==="active" || r.status==="with_client") && r.checkedInDeviceId && r.checkedInDeviceId !== deviceToken;
+    if(whoSel.dataset.repSignature !== repSignature){
+      const prevVal = whoSel.value;
+      const prevRep = state.reps.find(r=>r.id===prevVal);
+      const prevRepNowLocked = isLockedElsewhere(prevRep);
+
+      whoSel.innerHTML = `<option value="">— Select your name —</option>` + state.reps.map(r=>{
+        const lockedElsewhere = isLockedElsewhere(r);
+        return `<option value="${r.id}" ${lockedElsewhere ? 'disabled' : ''}>${r.name}${lockedElsewhere ? ' (checked in elsewhere)' : ''}</option>`;
+      }).join("");
+
+      let restoreVal = prevVal;
+      if(prevRepNowLocked){
+        restoreVal = "";
+        showAlert(`${prevRep.name} was checked in on another device — please select your own name.`);
+      } else if(!state.reps.some(r=>r.id===restoreVal)){
+        if(preferredRepId && state.reps.some(r=>r.id===preferredRepId) && !isLockedElsewhere(state.reps.find(r=>r.id===preferredRepId))){
+          restoreVal = preferredRepId;
+        } else {
+          restoreVal = "";
+        }
+      }
+      whoSel.value = (restoreVal && state.reps.some(r=>r.id===restoreVal)) ? restoreVal : "";
+      whoSel.dataset.repSignature = repSignature;
+    }
+    whoSel.onchange = ()=>{ updateActionButtons(); updateCrossNotifyBanner(); updateOnDeckBanner(); };
+  });
+
+  safeRun("rotationList", ()=>{
+    const list = document.getElementById("rotationList");
+    const statusRank = { active: 0, with_client: 1, out: 2, not_checked_in: 3, checked_out: 4 };
+    const sorted = [...state.reps].sort((a,b)=>{
+      const ra = statusRank[a.status] ?? 5, rb = statusRank[b.status] ?? 5;
+      if(ra!==rb) return ra-rb;
+      if(a.status==="not_checked_in" || a.status==="checked_out") return a.name.localeCompare(b.name);
+      return (a.order||0)-(b.order||0);
+    });
+    const lowestActiveOrder = activeSorted().length ? Math.min(...activeSorted().map(x=>x.order)) : null;
+    const currentSelfId = document.getElementById("whoAmI").value;
+    const todaysAll = todaysEntries(state.log);
+    list.innerHTML = sorted.length ? sorted.map(r=>{
+      const isTop = r.status==="active" && r.order===lowestActiveOrder;
+      const upsToday = todaysAll.filter(e=>e.rep===r.name && !e.coverage && !e.visitingClient).length;
+      let meta, actionLabel, rowClass;
+      if(r.status==="not_checked_in"){
+        meta = r.reason ? `${r.reason}${r.expectedReturn ? " · back "+r.expectedReturn : ""}` : "Not checked in yet";
+        actionLabel = "Check in";
+        rowClass = "pending";
+      } else if(r.status==="checked_out"){
+        meta = "Checked out for the day";
+        actionLabel = "Check in";
+        rowClass = "pending";
+      } else if(r.status==="out"){
+        meta = `${r.reason||"Out"}${r.expectedReturn ? " · back "+r.expectedReturn : ""}`;
+        actionLabel = "Back in";
+        rowClass = "out";
+      } else if(r.status==="with_client"){
+        const staleFlag = r.activeCoverageLogId ? getStaleCoverageSessions(state).find(x=>x.entry.id===r.activeCoverageLogId) : null;
+        const timerStart = withClientStartFor(r, state.log);
+        const overdueMin = timerStart ? Math.floor((Date.now()-timerStart)/60000) : 0;
+        meta = `With a client${timerStart ? " · "+liveTimerSpan(timerStart) : ""} · ${upsToday} up${upsToday===1?"":"s"} today${staleFlag ? ` · ⚠ covering ${staleFlag.elapsedMin} min` : ""}`;
+        actionLabel = "Done with client";
+        rowClass = overdueMin >= WITH_CLIENT_REMINDER_MIN ? "busy overdue" : "busy";
+      } else {
+        const checkedInStr = r.checkedInAt ? `In at ${fmtTime(r.checkedInAt)} · ` : "";
+        meta = `${checkedInStr}${upsToday} up${upsToday===1?"":"s"} today${r.lastUpTaken ? " · last "+fmtTime(r.lastUpTaken) : ""}`;
+        actionLabel = "Step out";
+        rowClass = "";
+      }
+      const isSelfRow = r.id === currentSelfId;
+      return `
+        <div class="rep-row ${isTop?'active':''} ${rowClass}">
+          <div class="badge">${(r.status==='active' || r.status==='out' || r.status==='with_client') ? r.order : '–'}</div>
+          <div>
+            <div class="rep-name">${r.name}</div>
+            <div class="rep-meta">${meta}</div>
+          </div>
+          <div class="rep-side">
+            <button class="step-btn ${r.status==='out'?'stepped-out':''}" onclick="handleRowAction('${r.id}')" ${isSelfRow ? '' : 'style="opacity:0.4;cursor:not-allowed;"'}>
+              ${actionLabel}
+            </button>
+            ${isSelfRow && r.status==="active" ? `<button class="btn-ghost" style="padding:2px 6px;font-size:11px;margin-top:4px;" onclick="openSwapPositionModal('${r.id}')">Swap position</button>` : ""}
+          </div>
+        </div>`;
+    }).join("") : `<div class="empty">No reps at this location yet. Add some in Manage reps.</div>`;
+  });
+
+  safeRun("todaysLog", ()=>{
+    const logDiv = document.getElementById("logList");
+    const todaysLog = todaysEntries(state.log).sort((a,b)=>b.time-a.time);
+    const selfRepForEdit = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+    logDiv.innerHTML = todaysLog.length ? todaysLog.map(entry=>`
+      <div class="log-entry">
+        <div class="log-top">
+          <span class="log-client">${entry.client}
+            <span class="tag ${entry.type==='New'?'tag-new':'tag-returning'}">${entry.type}</span>
+            ${entry.category ? `<span class="tag ${entry.category==='Trade'?'tag-trade':'tag-new'}">${entry.category}</span>` : ""}
+            ${entry.appointment ? `<span class="tag tag-appointment">Appointment</span>` : ""}
+            ${entry.handoff ? `<span class="tag tag-handoff">Handoff${entry.handoffFrom ? ' from '+entry.handoffFrom : ''}</span>` : ""}
+            ${entry.reassignedFrom ? `<span class="tag tag-handoff">Reassigned from ${entry.reassignedFrom}</span>` : ""}
+            ${entry.coverage ? `<span class="tag tag-coverage">Coverage</span>` : ""}
+          </span>
+          <span class="log-time">${fmtTime(entry.time)}</span>
+        </div>
+        <div class="log-meta">${entry.rep}${entry.coverage && entry.coveringFor ? " · covering for "+entry.coveringFor : ""}${entry.notes ? " · "+entry.notes : ""}</div>
+        ${selfRepForEdit && canEditEntry(entry, selfRepForEdit.name) ? `<button class="btn-ghost" style="padding:2px 6px;font-size:11px;" onclick="openEditLogModal('${entry.id}')">Edit this entry</button>` : ""}
+      </div>
+    `).join("") : `<div class="empty">No client ups logged yet today.</div>`;
+  });
+
+  safeRun("actionButtons", updateActionButtons);
+  safeRun("upNextBanner", updateUpNextBanner);
+  safeRun("crossNotifyBanner", updateCrossNotifyBanner);
+  safeRun("onDeckBanner", updateOnDeckBanner);
+  safeRun("samplesOutBadge", updateSamplesOutBadge);
+}
+
+function updateCrossNotifyBanner(){
+  const banner = document.getElementById("crossNotifyBanner");
+  const selfRep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+  const allMyNotes = selfRep ? (state.crossLocationNotes||[]).filter(n=>n.homeRepName===selfRep.name) : [];
+  const unread = allMyNotes.filter(n=>!n.read);
+  if(unread.length){
+    banner.style.display = "block";
+    document.getElementById("crossNotifyText").textContent =
+      `🔔 ${unread.length} of your client${unread.length===1?'':'s'} were helped by someone else — tap to view`;
+    banner.onclick = openCrossNotifyModal;
+  } else {
+    banner.style.display = "none";
+  }
+  const pastNotesBtn = document.getElementById("pastClientNotesBtn");
+  if(pastNotesBtn) pastNotesBtn.style.display = allMyNotes.length ? "inline-block" : "none";
+  updateRetentionBanner();
+}
+
+function updateUpNextBanner(){
+  const banner = document.getElementById("upNextBanner");
+  if(!banner || !state) return;
+  const active = activeSorted();
+  const upNext = active.length ? active[0] : null;
+  if(!upNext){
+    banner.style.display = "none";
+    return;
+  }
+  banner.style.display = "block";
+  document.getElementById("upNextText").textContent = isLockActive(state)
+    ? `⏳ ${upNext.name} is taking their turn now`
+    : `🔔 Up next: ${upNext.name}`;
+}
+
+function updateOnDeckBanner(){
+  const banner = document.getElementById("onDeckBanner");
+  const selfRep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+  if(selfRep && isLockActive(state) && state.upLock.onDeckRepId === selfRep.id){
+    banner.style.display = "block";
+    document.getElementById("onDeckText").textContent =
+      `👀 You're on deck — ${state.upLock.actingRepName || "the current rep"} is taking the next up now.`;
+  } else {
+    banner.style.display = "none";
+  }
+  updateStillWithClientBanner();
+}
+
+function updateStillWithClientBanner(){
+  const banner = document.getElementById("stillWithClientBanner");
+  if(!banner || !state) return;
+  const selfRep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+  if(!selfRep || selfRep.status !== "with_client"){
+    banner.style.display = "none";
+    return;
+  }
+  const start = withClientStartFor(selfRep, state.log);
+  if(!start){ banner.style.display = "none"; return; }
+  const elapsedMin = Math.floor((Date.now() - start) / 60000);
+  if(elapsedMin >= WITH_CLIENT_REMINDER_MIN){
+    banner.style.display = "block";
+    document.getElementById("stillWithClientText").textContent =
+      `⏰ Still marked with a client — ${elapsedMin} min and counting.`;
+    banner.onclick = async ()=>{
+      if(await showConfirm("Mark yourself done with this client?")){
+        await markDoneWithClient(selfRep.id);
+      }
+    };
+  } else {
+    banner.style.display = "none";
+  }
+}
+
+function updateRetentionBanner(){
+  const banner = document.getElementById("retentionBanner");
+  const allEntries = [...state.log, ...(state.skipLog||[]), ...(state.crossLocationNotes||[])];
+  if(allEntries.length===0){ banner.style.display = "none"; return; }
+
+  const oldestTime = Math.min(...allEntries.map(e=>e.time));
+  const ageMs = Date.now() - oldestTime;
+  const ageDays = ageMs / (24*60*60*1000);
+  const daysUntilCleared = Math.max(0, Math.ceil(LOG_RETENTION_DAYS - ageDays));
+
+  if(ageDays >= (LOG_RETENTION_DAYS - RETENTION_REMINDER_LEAD_DAYS)){
+    banner.style.display = "block";
+    document.getElementById("retentionText").textContent = daysUntilCleared <= 0
+      ? "⏳ Some logs are due to be cleared very soon"
+      : `⏳ Some logs will be cleared in ${daysUntilCleared} day${daysUntilCleared===1?'':'s'}`;
+    banner.onclick = ()=>requireManagerPin(openExportModal);
+  } else {
+    banner.style.display = "none";
+  }
+}
+
+function updateActionButtons(){
+  const normalActions = document.getElementById("normalModeActions");
+  const pausedActions = document.getElementById("pausedModeActions");
+  const pauseBtn = document.getElementById("pauseRotationBtn"); // only present while the manager tools menu is open
+  if(state.rotationPaused){
+    normalActions.style.display = "none";
+    pausedActions.style.display = "block";
+    if(pauseBtn) pauseBtn.textContent = "Resume rotation";
+  } else {
+    normalActions.style.display = "block";
+    pausedActions.style.display = "none";
+    if(pauseBtn) pauseBtn.textContent = "Pause rotation";
+  }
+
+  const rep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+
+  // Decide which single top-level state to show. Only one of these five
+  // is visible at a time — this is what actually implements the "helping
+  // a client vs away from the floor" grouping from the mockup, plus a
+  // dedicated prompt for each transitional state (no name picked yet,
+  // not checked in, with a client, stepped out).
+  const states = ["noSelfState","checkInState","withClientState","backInState","activeGroupsState"];
+  let activeState;
+  if(!rep) activeState = "noSelfState";
+  else if(rep.status==="not_checked_in" || rep.status==="checked_out") activeState = "checkInState";
+  else if(rep.status==="with_client") activeState = "withClientState";
+  else if(rep.status==="out") activeState = "backInState";
+  else activeState = "activeGroupsState";
+  states.forEach(id=>{ document.getElementById(id).style.display = (id===activeState) ? "block" : "none"; });
+
+  if(rep && activeState==="withClientState"){
+    document.getElementById("withClientStateText").textContent = `With a client${rep.lastUpTaken ? " since "+fmtTime(rep.lastUpTaken) : ""}`;
+  }
+
+  const active = activeSorted();
+  const upNext = active.length ? active[0] : null;
+
+  const takeUpBtnEl = document.getElementById("takeUpBtn");
+  if(isLockActive(state)){
+    takeUpBtnEl.disabled = true;
+    takeUpBtnEl.textContent = "In progress…";
+  } else if(!upNext){
+    takeUpBtnEl.disabled = true;
+    takeUpBtnEl.textContent = "No one active";
+  } else if(!rep || rep.id !== upNext.id){
+    takeUpBtnEl.disabled = true;
+    takeUpBtnEl.textContent = "Not your turn";
+  } else {
+    takeUpBtnEl.disabled = false;
+    takeUpBtnEl.textContent = "Take next up";
+  }
+
+  const skipBtnEl = document.getElementById("skipTurnBtn");
+  if(isLockActive(state)){
+    skipBtnEl.disabled = true;
+    skipBtnEl.textContent = "In progress…";
+  } else if(!upNext){
+    skipBtnEl.disabled = true;
+    skipBtnEl.textContent = "No one active";
+  } else if(!rep || rep.id !== upNext.id){
+    skipBtnEl.disabled = true;
+    skipBtnEl.textContent = "Not your turn";
+  } else {
+    skipBtnEl.disabled = false;
+    skipBtnEl.textContent = "Skip my turn";
+  }
+
+  const apptBtnEl = document.getElementById("logAppointmentBtn");
+  if(!rep){
+    apptBtnEl.disabled = true;
+    apptBtnEl.textContent = "Log appointment";
+  } else if(rep.status==="with_client"){
+    apptBtnEl.disabled = true;
+    apptBtnEl.textContent = "Already with a client";
+  } else if(rep.status==="not_checked_in"){
+    apptBtnEl.disabled = true;
+    apptBtnEl.textContent = "Check in first";
+  } else if(rep.status==="checked_out"){
+    apptBtnEl.disabled = true;
+    apptBtnEl.textContent = "Checked out for the day";
+  } else {
+    apptBtnEl.disabled = false;
+    apptBtnEl.textContent = "Log appointment";
+  }
+
+  const coverBtnEl = document.getElementById("coverUpBtn");
+  const coverageTargets = getCoverageTargets(state);
+  if(coverageTargets.length===0){
+    coverBtnEl.disabled = true;
+    coverBtnEl.textContent = "No one needs coverage";
+  } else {
+    const defaultTarget = coverageTargets[0];
+    const coveringRep = coveringRepFor(active, defaultTarget.id);
+    if(!coveringRep){
+      coverBtnEl.disabled = true;
+      coverBtnEl.textContent = "No one available to cover";
+    } else {
+      coverBtnEl.disabled = false;
+      const suffix = coverageTargets.length > 1 ? ` (+${coverageTargets.length-1} more)` : "";
+      coverBtnEl.textContent = `Cover for ${defaultTarget.name} → ${coveringRep.name}${suffix}`;
+    }
+  }
+}
+
+function handleRowAction(repId){
+  const selfId = document.getElementById("whoAmI").value;
+  const rep = state.reps.find(r=>r.id===repId);
+  if(!rep) return;
+  if(repId !== selfId){
+    showAlert(`Select ${rep.name} in "I am" first — you can only manage your own status.`);
+    return;
+  }
+  if(rep.status==="not_checked_in" || rep.status==="checked_out"){
+    checkIn(repId);
+  } else if(rep.status==="with_client"){
+    markDoneWithClient(repId);
+  } else {
+    toggleStep(repId);
+  }
+}
+
+function entriesForDateStr(logArr, dateStr){
+  const [y,m,d] = dateStr.split('-').map(Number);
+  return logArr.filter(e=>{
+    const dt = new Date(e.time);
+    return dt.getFullYear()===y && dt.getMonth()===(m-1) && dt.getDate()===d;
+  });
+}
+
+function dateStrDaysAgo(n){
+  const d = new Date();
+  d.setDate(d.getDate()-n);
+  return localDateStr(d);
+}
+
+function logHistoryEntryHtml(entry, selfRepName){
+  return `
+    <div class="log-entry">
+      <div class="log-top">
+        <span class="log-client">${entry.client}
+          <span class="tag ${entry.type==='New'?'tag-new':'tag-returning'}">${entry.type}</span>
+          ${entry.category ? `<span class="tag ${entry.category==='Trade'?'tag-trade':'tag-new'}">${entry.category}</span>` : ""}
+          ${entry.appointment ? `<span class="tag tag-appointment">Appointment</span>` : ""}
+          ${entry.handoff ? `<span class="tag tag-handoff">Handoff${entry.handoffFrom ? ' from '+entry.handoffFrom : ''}</span>` : ""}
+            ${entry.reassignedFrom ? `<span class="tag tag-handoff">Reassigned from ${entry.reassignedFrom}</span>` : ""}
+          ${entry.coverage ? `<span class="tag tag-coverage">Coverage</span>` : ""}
+        </span>
+        <span class="log-time">${fmtTime(entry.time)}</span>
+      </div>
+      <div class="log-meta">${entry.rep}${entry.coverage && entry.coveringFor ? " · covering for "+entry.coveringFor : ""}${entry.notes ? " · "+entry.notes : ""}</div>
+      ${canEditEntry(entry, selfRepName) ? `<button class="btn-ghost" style="padding:2px 6px;font-size:11px;" onclick="openEditLogModal('${entry.id}')">Edit this entry</button>` : ""}
+    </div>`;
+}
+
+function openLogHistoryModal(){
+  const root = document.getElementById("modalRoot");
+  const todayStr = localDateStr(new Date());
+  const defaultDate = dateStrDaysAgo(1);
+  const minDate = dateStrDaysAgo(LOG_RETENTION_DAYS - 1);
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Past days — ${(LOCATIONS.find(l=>l.id===currentLocationId)||{}).name}</h3>
+        <div class="hint">Logs are kept for ${LOG_RETENTION_DAYS} days, then cleared automatically. You can edit your own entries within ${EDIT_WINDOW_HOURS} hours of logging them. Export CSV first if you need to keep something longer.</div>
+        <div id="dateFieldWrap">
+          <label>Date</label>
+          <input type="date" id="historyDate" value="${defaultDate}" min="${minDate}" max="${todayStr}" />
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn-secondary" id="viewAllWeekBtn" style="width:100%;">View all ${LOG_RETENTION_DAYS} days at once</button>
+        </div>
+        <div id="historyResults" style="margin-top:14px;"></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()" style="flex:1;">Close</button>
+        </div>
+      </div>
+    </div>`;
+
+  function renderHistoryResults(){
+    document.getElementById("dateFieldWrap").style.display = "block";
+    document.getElementById("viewAllWeekBtn").textContent = `View all ${LOG_RETENTION_DAYS} days at once`;
+    const dateStr = document.getElementById("historyDate").value;
+    const entries = entriesForDateStr(state.log, dateStr).sort((a,b)=>b.time-a.time);
+    const selfRep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+    const resultsDiv = document.getElementById("historyResults");
+    resultsDiv.innerHTML = entries.length
+      ? `<p style="font-size:12px;color:var(--muted);margin:0 0 8px;">${entries.length} client${entries.length===1?'':'s'} logged</p>${entries.map(e=>logHistoryEntryHtml(e, selfRep ? selfRep.name : null)).join("")}`
+      : `<div class="empty">No clients logged on this date.</div>`;
+  }
+
+  function renderAllWeekResults(){
+    document.getElementById("dateFieldWrap").style.display = "none";
+    document.getElementById("viewAllWeekBtn").textContent = "Back to a single day";
+    const selfRep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+    const resultsDiv = document.getElementById("historyResults");
+    const all = (state.log||[]).slice().sort((a,b)=>b.time-a.time);
+    if(!all.length){
+      resultsDiv.innerHTML = `<div class="empty">No clients logged in the last ${LOG_RETENTION_DAYS} days.</div>`;
+      return;
+    }
+    // group by local calendar date so entries are unambiguous even though
+    // each entry only shows a time, not a date, within its own group
+    const groups = [];
+    all.forEach(e=>{
+      const key = localDateStr(new Date(e.time));
+      let g = groups.find(x=>x.key===key);
+      if(!g){ g = { key, label: new Date(e.time).toLocaleDateString([], {weekday:'long', month:'short', day:'numeric'}), entries: [] }; groups.push(g); }
+      g.entries.push(e);
+    });
+    resultsDiv.innerHTML = `<p style="font-size:12px;color:var(--muted);margin:0 0 10px;">${all.length} client${all.length===1?'':'s'} logged over the last ${LOG_RETENTION_DAYS} days</p>`
+      + groups.map(g => `
+          <p style="font-size:12px;font-weight:700;color:var(--dark);margin:10px 0 6px;">${g.label} — ${g.entries.length}</p>
+          ${g.entries.map(e=>logHistoryEntryHtml(e, selfRep ? selfRep.name : null)).join("")}
+        `).join("");
+  }
+
+  let showingAllWeek = false;
+  document.getElementById("viewAllWeekBtn").onclick = ()=>{
+    showingAllWeek = !showingAllWeek;
+    if(showingAllWeek) renderAllWeekResults(); else renderHistoryResults();
+  };
+  document.getElementById("historyDate").onchange = renderHistoryResults;
+  renderHistoryResults();
+}
+
+function openEditLogModal(entryId){
+  const entry = state.log.find(e=>e.id===entryId);
+  if(!entry) return;
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Edit your last entry</h3>
+        <div class="hint">Only your most recent entry can be edited, and only from here.</div>
+        <label>Client name</label>
+        <input type="text" id="editClientName" value="${entry.client.replace(/"/g,'&quot;')}" />
+        <label>New or returning</label>
+        <div class="radio-row" id="editTypeRow">
+          <div class="radio-opt ${entry.type==='New'?'picked':''}" data-val="New">New</div>
+          <div class="radio-opt ${entry.type==='Returning'?'picked':''}" data-val="Returning">Returning</div>
+        </div>
+        <label>Notes</label>
+        <textarea id="editNotesField">${entry.notes || ""}</textarea>
+        <label>Reassign to another rep</label>
+        <select class="full" id="editReassignRep">
+          <option value="">${entry.rep} (no change)</option>
+          ${state.reps.filter(r=>r.status==="active" && r.name!==entry.rep).sort((a,b)=>a.order-b.order).map(r=>`<option value="${r.id}">${r.name}</option>`).join("")}
+        </select>
+        <div class="hint">If the client was actually being helped by someone else, pick them here. They'll be credited with this up and sent to the back of the current rotation, same as taking a real up.</div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary" id="confirmEditLog">Save changes</button>
+        </div>
+      </div>
+    </div>`;
+
+  const typeRow = document.getElementById("editTypeRow");
+  let pickedType = entry.type;
+  typeRow.querySelectorAll(".radio-opt").forEach(el=>{
+    el.onclick = ()=>{
+      typeRow.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      pickedType = el.dataset.val;
+    };
+  });
+
+  document.getElementById("confirmEditLog").onclick = async ()=>{
+    const clientName = document.getElementById("editClientName").value.trim();
+    if(!clientName){ await showAlert("Enter a client name."); return; }
+    // re-fetch fresh at save time, same pattern as Step Out — never trust a
+    // reference captured when the form opened
+    const currentEntry = state.log.find(e=>e.id===entryId);
+    if(!currentEntry){
+      await showAlert("This entry no longer exists.");
+      closeModal();
+      render();
+      return;
+    }
+
+    const reassignRepId = document.getElementById("editReassignRep").value;
+    let newRep = null;
+    if(reassignRepId){
+      newRep = state.reps.find(r=>r.id===reassignRepId);
+      if(!newRep){
+        await showAlert("That rep no longer exists — pick someone else, or leave it as no change.");
+        return;
+      }
+      const ok = await showConfirm(`Reassign this client to ${newRep.name}? ${newRep.name} will be credited with this up and sent to the back of the rotation. ${currentEntry.rep}'s rotation position won't change.`);
+      if(!ok) return;
+    }
+
+    currentEntry.client = clientName;
+    currentEntry.type = pickedType;
+    currentEntry.notes = document.getElementById("editNotesField").value.trim();
+
+    if(newRep && newRep.name !== currentEntry.rep){
+      const wasRealUp = !currentEntry.coverage && !currentEntry.visitingClient;
+      const priorRepName = currentEntry.rep;
+      currentEntry.rep = newRep.name;
+      currentEntry.reassignedFrom = priorRepName;
+      if(wasRealUp){
+        if(newRep.status==="active"){
+          // Same gap-closing pattern used for Handoff: close the gap at the
+          // newly-credited rep's OWN prior position, then send them to the
+          // back. The original rep's position is intentionally left untouched.
+          const removedOrder = newRep.order;
+          state.reps.forEach(r=>{
+            if(r.id!==newRep.id && r.status==="active" && removedOrder!=null && r.order > removedOrder) r.order -= 1;
+          });
+          newRep.order = state.reps.length;
+          newRep.upsToday += 1;
+          newRep.lastUpTaken = Date.now();
+        } else {
+          await showAlert(`${newRep.name} is no longer checked in as active, so their rotation position couldn't be updated — the entry was still reassigned to them.`);
+        }
+      }
+    }
+
+    await saveState();
+    closeModal();
+    render();
+  };
+}
+
+async function markDoneWithClient(repId){
+  const rep = state.reps.find(r=>r.id===repId);
+  if(!rep) return;
+
+  if(rep.activeCoverageLogId){
+    const entry = state.log.find(e=>e.id===rep.activeCoverageLogId);
+    if(entry && !entry.coverageEnd){
+      const endTime = Date.now();
+      entry.coverageEnd = endTime;
+      const durationMin = Math.max(1, Math.round((endTime - entry.coverageStart) / 60000));
+      // strip the "in progress" placeholder we added at pickup, then record the final timing
+      const baseNotes = (entry.notes || "").replace(/,?\s*coverage in progress$/, "");
+      entry.notes = `${baseNotes} — completed ${fmtTime(endTime)} (${durationMin} min covering)`.trim();
+      // Position is always preserved here — no automatic rotation consequence
+      // based on duration. The timestamps are tracked and exportable so a
+      // manager can review them and decide manually if it's worth adjusting.
+    }
+    rep.activeCoverageLogId = null;
+  }
+
+  rep.status = "active";
+  await saveState();
+  render();
+}
+
+async function checkIn(repId){
+  const rep = state.reps.find(r=>r.id===repId);
+  if(!rep) return;
+  if((rep.status==="active" || rep.status==="with_client") && rep.checkedInDeviceId && rep.checkedInDeviceId !== deviceToken){
+    await showAlert(`${rep.name} is already checked in on another device.`);
+    render();
+    return;
+  }
+  const activeOrders = state.reps.filter(r=>r.status==="active").map(r=>r.order||0);
+  const maxOrder = activeOrders.length ? Math.max(...activeOrders) : 0;
+  rep.status = "active";
+  rep.order = maxOrder + 1;
+  rep.arrivalTime = Date.now();
+  rep.checkedInAt = Date.now();
+  rep.reason = null;
+  rep.expectedReturn = null;
+  rep.checkedInDeviceId = deviceToken;
+  try{ await storageSet("preferred_rep_id", repId, false); }catch(e){}
+  await saveState();
+  render();
+}
+
+async function toggleStep(repId){
+  const rep = state.reps.find(r=>r.id===repId);
+  if(!rep) return;
+  if(rep.status==="active"){
+    openStepOutModal(repId);
+  } else if(rep.status==="out") {
+    rep.status = "active";
+    rep.reason = null;
+    rep.expectedReturn = null;
+    await saveState();
+    render();
+  }
+}
+
+let dashboardPollTimer = null;
+
+function closeModal(){
+  document.getElementById("modalRoot").innerHTML = "";
+  if(dashboardPollTimer){ clearInterval(dashboardPollTimer); dashboardPollTimer = null; }
+}
+
+// Native window.alert()/confirm() can be silently blocked inside sandboxed
+// iframes (which is how this artifact runs), so every confirmation and
+// validation message in the app goes through these instead.
+function showAlert(message){
+  return new Promise((resolve)=>{
+    const root = document.getElementById("alertRoot");
+    root.innerHTML = `
+      <div class="alert-overlay">
+        <div class="alert-box">
+          <p>${message}</p>
+          <div class="modal-actions">
+            <button class="btn-primary" id="alertOkBtn" style="flex:1;">OK</button>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById("alertOkBtn").onclick = ()=>{
+      root.innerHTML = "";
+      resolve();
+    };
+  });
+}
+
+function showConfirm(message){
+  return new Promise((resolve)=>{
+    const root = document.getElementById("alertRoot");
+    root.innerHTML = `
+      <div class="alert-overlay">
+        <div class="alert-box">
+          <p>${message}</p>
+          <div class="modal-actions">
+            <button class="btn-secondary" id="confirmNoBtn" style="flex:1;">Cancel</button>
+            <button class="btn-primary" id="confirmYesBtn" style="flex:1;">Confirm</button>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById("confirmNoBtn").onclick = ()=>{
+      root.innerHTML = "";
+      resolve(false);
+    };
+    document.getElementById("confirmYesBtn").onclick = ()=>{
+      root.innerHTML = "";
+      resolve(true);
+    };
+  });
+}
+
+function openStepOutModal(repId){
+  const rep = state.reps.find(r=>r.id===repId);
+  if(!rep) return;
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Step out — ${rep.name}</h3>
+        <div class="hint" id="stepOutHint">They'll show as not checked in and need to check in again when they're back.</div>
+        <label>Reason</label>
+        <select class="full" id="reasonSel">
+          <option value="Client meeting">Client meeting</option>
+          <option value="Break">Break</option>
+          <option value="Other">Other</option>
+          <option value="__checkout__">Done for the day / leaving early</option>
+        </select>
+        <div id="returnTimeWrap">
+          <label>Expected return (optional)</label>
+          <input type="time" id="returnTime" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary" id="confirmStepOut">Step out</button>
+        </div>
+      </div>
+    </div>`;
+
+  const reasonSel = document.getElementById("reasonSel");
+  const hint = document.getElementById("stepOutHint");
+  const returnWrap = document.getElementById("returnTimeWrap");
+  const confirmBtn = document.getElementById("confirmStepOut");
+  reasonSel.onchange = ()=>{
+    if(reasonSel.value === "__checkout__"){
+      hint.textContent = "Frees up their spot for the day — they'll need to check in again to rejoin.";
+      returnWrap.style.display = "none";
+      confirmBtn.textContent = "Check out";
+    } else {
+      hint.textContent = "They'll show as not checked in and need to check in again when they're back.";
+      returnWrap.style.display = "block";
+      confirmBtn.textContent = "Step out";
+    }
+  };
+
+  document.getElementById("confirmStepOut").onclick = async ()=>{
+    // re-fetch fresh, in case background sync replaced the whole state object
+    // while this form was open — never mutate a possibly-orphaned reference
+    const currentRep = state.reps.find(r=>r.id===repId);
+    if(!currentRep){
+      await showAlert("This rep no longer exists — they may have been removed while this form was open.");
+      closeModal();
+      render();
+      return;
+    }
+    if(reasonSel.value === "__checkout__"){
+      const removedOrder = currentRep.order;
+      currentRep.status = "checked_out";
+      currentRep.order = null;
+      currentRep.reason = null;
+      currentRep.expectedReturn = null;
+      currentRep.checkedInDeviceId = null;
+      state.reps.forEach(r=>{
+        if(r.status==="active" && removedOrder!=null && r.order > removedOrder) r.order -= 1;
+      });
+    } else {
+      const removedOrder = currentRep.order;
+      currentRep.status = "not_checked_in";
+      currentRep.order = null;
+      currentRep.reason = reasonSel.value;
+      currentRep.checkedInDeviceId = null;
+      const t = document.getElementById("returnTime").value;
+      currentRep.expectedReturn = t ? formatTimeInput(t) : null;
+      state.reps.forEach(r=>{
+        if(r.status==="active" && removedOrder!=null && r.order > removedOrder) r.order -= 1;
+      });
+    }
+    await saveState();
+    closeModal();
+    render();
+  };
+}
+
+function openSwapPositionModal(repId){
+  const rep = state.reps.find(r=>r.id===repId);
+  if(!rep || rep.status!=="active") return;
+  const others = activeSorted().filter(r=>r.id!==repId);
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Swap position — ${rep.name}</h3>
+        <div class="hint">You're currently spot #${rep.order}. Pick who to trade places with — no manager needed, and it doesn't affect anyone else's position.</div>
+        <label>Swap with</label>
+        <select class="full" id="swapWithRep">
+          ${others.length
+            ? others.map(r=>`<option value="${r.id}">#${r.order} — ${r.name}</option>`).join("")
+            : `<option value="">No one else is checked in right now</option>`}
+        </select>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary" id="confirmSwapPosition" ${others.length ? "" : "disabled"}>Swap</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById("confirmSwapPosition").onclick = async ()=>{
+    const otherId = document.getElementById("swapWithRep").value;
+    if(!otherId) return;
+    // re-fetch fresh at save time — never trust references captured when the form opened
+    const currentSelf = state.reps.find(r=>r.id===repId);
+    const currentOther = state.reps.find(r=>r.id===otherId);
+    if(!currentSelf || !currentOther || currentSelf.status!=="active" || currentOther.status!=="active"){
+      await showAlert("One of you is no longer active in the rotation — refresh and try again.");
+      closeModal();
+      render();
+      return;
+    }
+    const ok = await showConfirm(`Swap positions with ${currentOther.name}? You'll be #${currentOther.order} and they'll be #${currentSelf.order}. No one else's position changes.`);
+    if(!ok) return;
+    // A direct two-way exchange of order values — unlike taking an up or
+    // reassigning one, this never creates a gap to close: both reps keep
+    // valid, unique positions and everyone else is completely untouched.
+    const tmp = currentSelf.order;
+    currentSelf.order = currentOther.order;
+    currentOther.order = tmp;
+    await saveState();
+    closeModal();
+    render();
+  };
+}
+
+function formatTimeInput(hhmm){
+  const [h,m] = hhmm.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h,m,0,0);
+  return d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+}
+
+function openCrossNotifyModal(){
+  const selfRep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+  if(!selfRep) return;
+  const myNotes = (state.crossLocationNotes||[])
+    .filter(n=>n.homeRepName===selfRep.name)
+    .sort((a,b)=>b.time-a.time);
+
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Your clients were helped by others</h3>
+        <div class="hint">These don't affect your rotation or stats — just letting you know.</div>
+        <div id="crossNoteList"></div>
+        <div class="modal-actions">
+          <button class="btn-primary" id="dismissCrossNotes" style="flex:1;">Mark all as read</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById("crossNoteList").innerHTML = myNotes.length ? myNotes.map(n=>`
+    <div class="log-entry">
+      <div class="log-top">
+        <span class="log-client">${n.clientName}${!n.read ? ` <span class="tag tag-coverage">New</span>` : ""}</span>
+        <span class="log-time">${fmtTime(n.time)}</span>
+      </div>
+      <div class="log-meta">${n.isCoverage ? `Covered by ${n.visitingRepName} while you were out` : `Helped by ${n.visitingRepName} at ${n.visitingLocationName}`}${n.notes ? " · "+n.notes : ""}</div>
+    </div>
+  `).join("") : `<div class="empty">No notes yet.</div>`;
+
+  document.getElementById("dismissCrossNotes").onclick = async ()=>{
+    const fresh = state.crossLocationNotes || [];
+    fresh.forEach(n=>{ if(n.homeRepName===selfRep.name) n.read = true; });
+    await saveState();
+    closeModal();
+    render();
+  };
+}
+
+async function addCrossLocationNote(homeLocationId, note){
+  try{
+    const homeState = await loadLocationState(homeLocationId);
+    if(!homeState.crossLocationNotes) homeState.crossLocationNotes = [];
+    homeState.crossLocationNotes.push(note);
+    await storageSet(storageKey(homeLocationId), JSON.stringify(homeState), true);
+  }catch(e){
+    console.error("Failed to write cross-location note", e);
+  }
+}
+
+async function openTakeUpModal(){
+  // get the freshest lock status before claiming it, to minimize the race window
+  const fresh = await loadLocationState(currentLocationId);
+  state = fresh;
+
+  if(isLockActive(state)){
+    render();
+    await showAlert("Someone else is already taking the next up. Try again in a moment.");
+    return;
+  }
+
+  const active = activeSorted();
+  if(active.length===0){
+    render();
+    await showAlert("No one is checked in and active at this location yet.");
+    return;
+  }
+
+  const upNext = active[0];
+  const selfRep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+  if(!selfRep || selfRep.id !== upNext.id){
+    render();
+    await showAlert(`It's ${upNext.name}'s turn right now, not yours.`);
+    return;
+  }
+
+  // claim the lock immediately so other devices see it right away —
+  // also record who's on deck so they can be notified before this
+  // transaction even finishes, not just after
+  const onDeckRep = active[1] || null;
+  state.upLock = {
+    startedAt: Date.now(),
+    actingRepName: upNext.name,
+    onDeckRepId: onDeckRep ? onDeckRep.id : null,
+    onDeckRepName: onDeckRep ? onDeckRep.name : null
+  };
+  await saveState();
+  render();
+
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Take next up</h3>
+        <div class="hint">Up next: <strong>${upNext.name}</strong></div>
+        <label>Acting rep</label>
+        <div class="hint" style="margin-bottom:6px;">Change this if a different rep should actually take this client — e.g. they specialize in a specific product line. ${upNext.name} keeps their exact spot either way; the rep selected here counts this as their real up.</div>
+        <select class="full" id="actingRep">
+          ${active.map(r=>`<option value="${r.id}" ${r.id===upNext.id?'selected':''}>${r.name}</option>`).join("")}
+        </select>
+        <label>Client name</label>
+        <input type="text" id="clientName" placeholder="e.g. Alicia Ford" />
+        <label>New or returning</label>
+        <div class="radio-row" id="typeRow">
+          <div class="radio-opt picked" data-val="New">New</div>
+          <div class="radio-opt" data-val="Returning">Returning</div>
+        </div>
+        <label>End user or trade</label>
+        <div class="radio-row" id="categoryRow">
+          <div class="radio-opt picked" data-val="End User">End User</div>
+          <div class="radio-opt" data-val="Trade">Trade</div>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="coverageCheck" />
+          <label style="margin:0;">This is coverage</label>
+        </div>
+        <div id="coverForWrap" style="display:none;">
+          <label>Covering for</label>
+          <select class="full" id="coverFor">
+            ${state.reps.filter(r=>r.id!==upNext.id).map(r=>`<option value="${r.name}">${r.name}</option>`).join("")}
+          </select>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="visitingCheck" />
+          <label style="margin:0;">Visiting client — home rep is at another location</label>
+        </div>
+        <div id="visitingWrap" style="display:none;">
+          <div class="hint" style="margin-bottom:10px;">This is for visiting clients for reps that are not assigned to this location.</div>
+          <label>Home location</label>
+          <select class="full" id="homeLocationSel">
+            ${LOCATIONS.filter(l=>l.id!==currentLocationId).map(l=>`<option value="${l.id}">${l.name}</option>`).join("")}
+          </select>
+          <label>Home rep</label>
+          <select class="full" id="homeRepSel"><option value="">Loading…</option></select>
+        </div>
+        <label>Notes</label>
+        <textarea id="notesField" placeholder="Optional notes"></textarea>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelTakeUp">Cancel</button>
+          <button class="btn-primary" id="confirmLog">Log it</button>
+        </div>
+      </div>
+    </div>`;
+
+  const typeRow = document.getElementById("typeRow");
+  let pickedType = "New";
+  typeRow.querySelectorAll(".radio-opt").forEach(el=>{
+    el.onclick = ()=>{
+      typeRow.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      pickedType = el.dataset.val;
+    };
+  });
+  const categoryRow = document.getElementById("categoryRow");
+  let pickedCategory = "End User";
+  categoryRow.querySelectorAll(".radio-opt").forEach(el=>{
+    el.onclick = ()=>{
+      categoryRow.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      pickedCategory = el.dataset.val;
+    };
+  });
+  document.getElementById("coverageCheck").onchange = (e)=>{
+    document.getElementById("coverForWrap").style.display = e.target.checked ? "block" : "none";
+  };
+
+  async function loadHomeRepOptions(){
+    const homeLocId = document.getElementById("homeLocationSel").value;
+    const homeRepSel = document.getElementById("homeRepSel");
+    const confirmBtn = document.getElementById("confirmLog");
+    homeRepSel.innerHTML = `<option value="">Loading…</option>`;
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = "0.5";
+    const homeState = await loadLocationState(homeLocId);
+    homeRepSel.innerHTML = homeState.reps.length
+      ? homeState.reps.map(r=>`<option value="${r.id}">${r.name}</option>`).join("")
+      : `<option value="">No reps on that roster</option>`;
+    confirmBtn.disabled = false;
+    confirmBtn.style.opacity = "1";
+  }
+
+  document.getElementById("visitingCheck").onchange = (e)=>{
+    document.getElementById("visitingWrap").style.display = e.target.checked ? "block" : "none";
+    if(e.target.checked) loadHomeRepOptions();
+  };
+  document.getElementById("homeLocationSel").onchange = loadHomeRepOptions;
+
+  document.getElementById("cancelTakeUp").onclick = async ()=>{
+    state.upLock = null;
+    await saveState();
+    closeModal();
+    render();
+  };
+
+  document.getElementById("confirmLog").onclick = async ()=>{
+    const clientName = document.getElementById("clientName").value.trim();
+    if(!clientName){ await showAlert("Enter a client name."); return; }
+    const actingId = document.getElementById("actingRep").value;
+    const actingRep = state.reps.find(r=>r.id===actingId);
+    const coverage = document.getElementById("coverageCheck").checked;
+    const coverFor = coverage ? document.getElementById("coverFor").value : null;
+    const isVisiting = document.getElementById("visitingCheck").checked;
+    const notes = document.getElementById("notesField").value.trim();
+
+    const now = Date.now();
+    const logId = "log_" + now + "_" + Math.random().toString(36).slice(2,7);
+
+    let homeLocationId = null, homeLocationName = null, homeRepName = null;
+    if(isVisiting){
+      homeLocationId = document.getElementById("homeLocationSel").value;
+      homeLocationName = (LOCATIONS.find(l=>l.id===homeLocationId)||{}).name || homeLocationId;
+      const homeRepSel = document.getElementById("homeRepSel");
+      const homeRepVal = homeRepSel.value;
+      if(!homeRepVal){
+        await showAlert("Pick a home rep before logging this — the roster may still be loading, give it a second and try again.");
+        return;
+      }
+      homeRepName = homeRepSel.options[homeRepSel.selectedIndex] ? homeRepSel.options[homeRepSel.selectedIndex].text : null;
+    }
+
+    const isHandoff = !coverage && !isVisiting && actingRep.id !== upNext.id;
+
+    state.log.push({
+      id: logId,
+      time: now,
+      rep: actingRep.name,
+      client: clientName,
+      type: pickedType,
+      category: pickedCategory,
+      coverage,
+      coveringFor: coverFor,
+      visitingClient: isVisiting,
+      homeLocationName: homeLocationName,
+      homeRepName: homeRepName,
+      handoff: isHandoff,
+      handoffFrom: isHandoff ? upNext.name : null,
+      coverageStart: isVisiting ? now : null,
+      coverageEnd: null,
+      notes: isVisiting
+        ? (notes ? `${notes} — picked up ${fmtTime(now)}, coverage in progress` : `Picked up ${fmtTime(now)}, coverage in progress`)
+        : notes
+    });
+
+    if(coverage || isVisiting){
+      // covering rep (or visiting-client assist) keeps their exact spot for now.
+      // For visiting clients, markDoneWithClient decides afterward whether the
+      // time spent crossed the threshold and should send them to the back after all.
+      // upsToday is intentionally not incremented — neither coverage nor a
+      // visiting-client assist counts as an up.
+    } else {
+      // Close the gap left behind at the acting rep's OWN original position —
+      // not a blanket "shift everyone else down by one". This matters for a
+      // handoff (acting rep isn't the up-next person): it leaves the up-next
+      // rep, and anyone else ahead of the acting rep's old spot, completely
+      // untouched, while still correctly moving the acting rep to the back.
+      const removedOrder = actingRep.order;
+      state.reps.forEach(r=>{
+        if(r.id!==actingRep.id && r.status==="active" && removedOrder!=null && r.order > removedOrder) r.order -= 1;
+      });
+      actingRep.order = state.reps.length;
+      actingRep.upsToday += 1;
+    }
+    actingRep.lastUpTaken = Date.now();
+    actingRep.status = "with_client";
+    if(isVisiting) actingRep.activeCoverageLogId = logId;
+    state.upLock = null;
+
+    await saveState();
+
+    if(isVisiting && homeLocationId){
+      await addCrossLocationNote(homeLocationId, {
+        id: "xnote_" + now + "_" + Math.random().toString(36).slice(2,7),
+        time: now,
+        homeRepName,
+        visitingLocationName: (LOCATIONS.find(l=>l.id===currentLocationId)||{}).name || currentLocationId,
+        visitingRepName: actingRep.name,
+        clientName,
+        notes,
+        read: false
+      });
+    }
+
+    closeModal();
+    render();
+  };
+}
+
+function getCoverageTargets(s){
+  // Coverage is for reps who are genuinely unavailable — stepped out (meeting/
+  // break/other), checked out for the day, or never checked in (likely off) —
+  // not for the person simply next in line, since they just take their own up.
+  const outReps = s.reps.filter(r=>r.status==="out");
+  const checkedOutReps = s.reps.filter(r=>r.status==="checked_out");
+  const notCheckedInReps = s.reps.filter(r=>r.status==="not_checked_in");
+  return [...outReps, ...checkedOutReps, ...notCheckedInReps];
+}
+
+function coverageTargetLabel(r){
+  if(r.status==="out") return `${r.name} (${r.reason || "out"})`;
+  if(r.status==="checked_out") return `${r.name} (checked out for the day)`;
+  if(r.status==="not_checked_in") return r.reason ? `${r.name} (${r.reason})` : `${r.name} (not checked in — likely off)`;
+  return r.name;
+}
+
+// Finds coverage sessions that are still open (no completion timestamp) and
+// have been running longer than COVERAGE_STALE_MINUTES. Returns plain,
+// structured data (no DOM/render coupling) so this can be called equally
+// well from the UI or, later, from an automated monitor/agent that watches
+// the board and nudges people — e.g. a scheduled job that reads this same
+// function's output across locations and pings a manager or the covering
+// rep directly. Keep this function pure and side-effect-free for that reason.
+function getStaleCoverageSessions(s){
+  const now = Date.now();
+  return s.log
+    .filter(e => (e.coverage || e.visitingClient) && e.coverageStart && !e.coverageEnd)
+    .map(e => ({
+      entry: e,
+      elapsedMin: Math.round((now - e.coverageStart) / 60000)
+    }))
+    .filter(x => x.elapsedMin >= COVERAGE_STALE_MINUTES)
+    .sort((a,b) => b.elapsedMin - a.elapsedMin);
+}
+
+function coveringRepFor(active, targetId){
+  const options = active.filter(r=>r.id!==targetId);
+  if(options.length===0) return null;
+  return options.reduce((last, r) => r.order > last.order ? r : last, options[0]);
+}
+
+function openFreeLogModal(){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Log a client</h3>
+        <div class="hint">Rotation is paused — this just records who you helped, no turn order involved.</div>
+        <label>Salesperson</label>
+        <select class="full" id="freeLogRep">
+          ${state.reps.map(r=>`<option value="${r.id}">${r.name}</option>`).join("")}
+        </select>
+        <label>Client name</label>
+        <input type="text" id="clientName" placeholder="e.g. Alicia Ford" />
+        <label>New or returning</label>
+        <div class="radio-row" id="typeRow">
+          <div class="radio-opt picked" data-val="New">New</div>
+          <div class="radio-opt" data-val="Returning">Returning</div>
+        </div>
+        <label>End user or trade</label>
+        <div class="radio-row" id="categoryRow">
+          <div class="radio-opt picked" data-val="End User">End User</div>
+          <div class="radio-opt" data-val="Trade">Trade</div>
+        </div>
+        <label>Notes</label>
+        <textarea id="notesField" placeholder="Optional notes"></textarea>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary" id="confirmFreeLog">Log it</button>
+        </div>
+      </div>
+    </div>`;
+
+  const typeRow = document.getElementById("typeRow");
+  let pickedType = "New";
+  typeRow.querySelectorAll(".radio-opt").forEach(el=>{
+    el.onclick = ()=>{
+      typeRow.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      pickedType = el.dataset.val;
+    };
+  });
+  const categoryRow = document.getElementById("categoryRow");
+  let pickedCategory = "End User";
+  categoryRow.querySelectorAll(".radio-opt").forEach(el=>{
+    el.onclick = ()=>{
+      categoryRow.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      pickedCategory = el.dataset.val;
+    };
+  });
+
+  document.getElementById("confirmFreeLog").onclick = async ()=>{
+    const clientName = document.getElementById("clientName").value.trim();
+    if(!clientName){ await showAlert("Enter a client name."); return; }
+    const rep = state.reps.find(r=>r.id===document.getElementById("freeLogRep").value);
+    const notes = document.getElementById("notesField").value.trim();
+    state.log.push({
+      id: "log_" + Date.now() + "_" + Math.random().toString(36).slice(2,7),
+      time: Date.now(),
+      rep: rep.name,
+      client: clientName,
+      type: pickedType,
+      category: pickedCategory,
+      coverage: false,
+      coveringFor: null,
+      notes
+    });
+    await saveState();
+    closeModal();
+    render();
+  };
+}
+
+async function openResumeReorderModal(){
+  closeModal();
+  const candidates = state.reps.filter(r=>r.status==="active" || r.status==="with_client")
+    .sort((a,b)=>(a.order||0)-(b.order||0));
+  if(candidates.length===0){
+    if(await showConfirm("No one is currently active or with a client to sequence. Resume the rotation anyway?")){
+      state.rotationPaused = false;
+      await saveState();
+      render();
+    }
+    return;
+  }
+  let orderedIds = candidates.map(r=>r.id);
+  renderResumeReorderModal(orderedIds);
+}
+
+function renderResumeReorderModal(orderedIds){
+  const root = document.getElementById("modalRoot");
+  const reps = orderedIds.map(id => state.reps.find(r=>r.id===id));
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Resume rotation</h3>
+        <div class="hint">Set the order the team agreed on, then resume. Everyone listed keeps their checked-in / with-client status.</div>
+        <div id="resumeList"></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary" id="confirmResume">Resume rotation</button>
+        </div>
+      </div>
+    </div>`;
+
+  const listDiv = document.getElementById("resumeList");
+  listDiv.innerHTML = reps.map((r,i)=>`
+    <div class="manage-row">
+      <span>${i+1}. ${r.name}${r.status==="with_client" ? " (with client)" : ""}</span>
+      <span>
+        <button class="btn-ghost" style="padding:2px 8px;" onclick="moveResumeItem('${r.id}',-1)" ${i===0?'disabled':''}>↑</button>
+        <button class="btn-ghost" style="padding:2px 8px;" onclick="moveResumeItem('${r.id}',1)" ${i===reps.length-1?'disabled':''}>↓</button>
+      </span>
+    </div>
+  `).join("");
+
+  document.getElementById("confirmResume").onclick = async ()=>{
+    orderedIds.forEach((id,i)=>{
+      const r = state.reps.find(x=>x.id===id);
+      if(r) r.order = i+1;
+    });
+    state.rotationPaused = false;
+    await saveState();
+    closeModal();
+    render();
+  };
+
+  window.__resumeOrderedIds = orderedIds;
+}
+
+function moveResumeItem(repId, direction){
+  const ids = window.__resumeOrderedIds;
+  const idx = ids.indexOf(repId);
+  const newIdx = idx + direction;
+  if(newIdx < 0 || newIdx >= ids.length) return;
+  [ids[idx], ids[newIdx]] = [ids[newIdx], ids[idx]];
+  renderResumeReorderModal(ids);
+}
+
+async function openLogAppointmentModal(){
+  const fresh = await loadLocationState(currentLocationId);
+  state = fresh;
+
+  const selfId = document.getElementById("whoAmI").value;
+  const selfRep = state.reps.find(r=>r.id===selfId);
+  if(!selfRep){
+    render();
+    await showAlert("Select yourself in \"I am\" first.");
+    return;
+  }
+  if(selfRep.status !== "active"){
+    render();
+    await showAlert(`You're not currently available to log an appointment (status: ${selfRep.status.replace('_',' ')}).`);
+    return;
+  }
+
+  render();
+
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Log appointment</h3>
+        <div class="hint">For a client requesting you by name. Counts as a real up — you'll move to the back of the rotation, same as any walk-in.</div>
+        <label>Client name</label>
+        <input type="text" id="clientName" placeholder="e.g. Alicia Ford" />
+        <label>New or returning</label>
+        <div class="radio-row" id="typeRow">
+          <div class="radio-opt picked" data-val="New">New</div>
+          <div class="radio-opt" data-val="Returning">Returning</div>
+        </div>
+        <label>End user or trade</label>
+        <div class="radio-row" id="categoryRow">
+          <div class="radio-opt picked" data-val="End User">End User</div>
+          <div class="radio-opt" data-val="Trade">Trade</div>
+        </div>
+        <label>Notes</label>
+        <textarea id="notesField" placeholder="Optional notes"></textarea>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelAppointment">Cancel</button>
+          <button class="btn-primary" id="confirmAppointment">Log it</button>
+        </div>
+      </div>
+    </div>`;
+
+  const typeRow = document.getElementById("typeRow");
+  let pickedType = "New";
+  typeRow.querySelectorAll(".radio-opt").forEach(el=>{
+    el.onclick = ()=>{
+      typeRow.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      pickedType = el.dataset.val;
+    };
+  });
+  const categoryRow = document.getElementById("categoryRow");
+  let pickedCategory = "End User";
+  categoryRow.querySelectorAll(".radio-opt").forEach(el=>{
+    el.onclick = ()=>{
+      categoryRow.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      pickedCategory = el.dataset.val;
+    };
+  });
+
+  document.getElementById("cancelAppointment").onclick = ()=>{
+    closeModal();
+    render();
+  };
+
+  document.getElementById("confirmAppointment").onclick = async ()=>{
+    const clientName = document.getElementById("clientName").value.trim();
+    if(!clientName){ await showAlert("Enter a client name."); return; }
+
+    // re-fetch and re-verify fresh at submit time
+    state = await loadLocationState(currentLocationId);
+    const actingRep = state.reps.find(r=>r.id===selfId);
+    if(!actingRep || actingRep.status !== "active"){
+      await showAlert("You're no longer available — someone or something changed your status. Try again.");
+      closeModal();
+      render();
+      return;
+    }
+    const notes = document.getElementById("notesField").value.trim();
+
+    state.log.push({
+      id: "log_" + Date.now() + "_" + Math.random().toString(36).slice(2,7),
+      time: Date.now(),
+      rep: actingRep.name,
+      client: clientName,
+      type: pickedType,
+      category: pickedCategory,
+      appointment: true,
+      coverage: false,
+      coveringFor: null,
+      notes
+    });
+
+    // counts as a real up — same rotation consequence as Take Next Up
+    const others = state.reps.filter(r=>r.id!==actingRep.id && r.status==="active");
+    others.forEach(r=>{ r.order = Math.max(1, r.order-1); });
+    actingRep.order = state.reps.length;
+    actingRep.upsToday += 1;
+    actingRep.lastUpTaken = Date.now();
+    actingRep.status = "with_client";
+
+    await saveState();
+    closeModal();
+    render();
+  };
+}
+
+// ---- Sample loan tracking ----
+function sampleNeedsAttention(s){
+  if(s.status !== "out") return false;
+  if(s.clientType==="trade"){
+    const daysOut = Math.floor((Date.now()-s.takenAt)/86400000);
+    return daysOut >= TRADE_SAMPLE_REMINDER_DAYS;
+  }
+  return s.dueAt != null && Date.now() > s.dueAt;
+}
+
+function updateSamplesOutBadge(){
+  const btn = document.getElementById("samplesOutBtnLabel");
+  if(!btn || !state) return;
+  const out = (state.samplesOut||[]).filter(s=>s.status==="out");
+  const overdue = out.filter(sampleNeedsAttention);
+  const wrapper = document.getElementById("samplesOutBtn");
+  if(overdue.length){
+    btn.textContent = `Samples out — ${overdue.length} overdue`;
+    wrapper.style.background = "var(--bg-danger, #fcebeb)";
+    wrapper.style.borderColor = "var(--terracotta)";
+    wrapper.style.color = "var(--terracotta-dark)";
+  } else if(out.length){
+    btn.textContent = `Samples out — ${out.length}`;
+    wrapper.style.background = "#e6f1fb";
+    wrapper.style.borderColor = "#378add";
+    wrapper.style.color = "#0c447c";
+  } else {
+    btn.textContent = "Samples out";
+    wrapper.style.background = "#e6f1fb";
+    wrapper.style.borderColor = "#378add";
+    wrapper.style.color = "#0c447c";
+  }
+}
+
+function openLogSampleModal(){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Log sample loan</h3>
+        <div class="hint">${new Date().toLocaleDateString([], {weekday:'long', month:'short', day:'numeric'})} — logged automatically</div>
+        <label>Client or company name</label>
+        <input type="text" id="sClientName" placeholder="e.g. Alicia Ford" />
+        <label>Phone number</label>
+        <input type="text" id="sClientPhone" placeholder="(305) 555-0148" />
+        <label>Client type</label>
+        <div class="radio-row" id="clientTypeRow">
+          <div class="radio-opt picked" data-val="end_user">End user</div>
+          <div class="radio-opt" data-val="trade">Trade</div>
+        </div>
+        <div id="windowSection">
+          <label>Return window</label>
+          <div class="radio-row" id="windowRow">
+            <div class="radio-opt picked" data-val="24">24 hrs</div>
+            <div class="radio-opt" data-val="48">48 hrs</div>
+          </div>
+        </div>
+        <div id="tradeNote" class="hint" style="display:none;">Open ended — no fixed due date. You'll see a reminder once it's been out ${TRADE_SAMPLE_REMINDER_DAYS} days.</div>
+        <label>Samples taken</label>
+        <textarea id="sSamplesText" placeholder="Kravet - navy linen, sand weave"></textarea>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary" id="confirmLogSample">Log loan</button>
+        </div>
+      </div>
+    </div>`;
+
+  let pickedType = "end_user";
+  const clientTypeRow = document.getElementById("clientTypeRow");
+  clientTypeRow.querySelectorAll(".radio-opt").forEach(el=>{
+    el.onclick = ()=>{
+      clientTypeRow.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      pickedType = el.dataset.val;
+      document.getElementById("windowSection").style.display = pickedType==="trade" ? "none" : "block";
+      document.getElementById("tradeNote").style.display = pickedType==="trade" ? "block" : "none";
+    };
+  });
+
+  let pickedWindow = 24;
+  const windowRow = document.getElementById("windowRow");
+  windowRow.querySelectorAll(".radio-opt").forEach(el=>{
+    el.onclick = ()=>{
+      windowRow.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      pickedWindow = parseInt(el.dataset.val, 10);
+    };
+  });
+
+  document.getElementById("confirmLogSample").onclick = async ()=>{
+    const clientName = document.getElementById("sClientName").value.trim();
+    if(!clientName){ await showAlert("Enter the client or company name."); return; }
+    const samplesText = document.getElementById("sSamplesText").value.trim();
+    if(!samplesText){ await showAlert("Enter what samples were taken."); return; }
+
+    const selfRep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+    const now = Date.now();
+    if(!state.samplesOut) state.samplesOut = [];
+    state.samplesOut.push({
+      id: "sample_" + now + "_" + Math.random().toString(36).slice(2,7),
+      clientName,
+      clientPhone: document.getElementById("sClientPhone").value.trim(),
+      clientType: pickedType,
+      samplesText,
+      takenAt: now,
+      takenBy: selfRep ? selfRep.name : "Unknown",
+      returnWindowHours: pickedType==="end_user" ? pickedWindow : null,
+      dueAt: pickedType==="end_user" ? (now + pickedWindow*60*60*1000) : null,
+      status: "out",
+      resolvedAt: null,
+      resolvedBy: null,
+      resolution: null
+    });
+    await saveState();
+    closeModal();
+    openSamplesOutModal();
+  };
+}
+
+function sampleCardHtml(s){
+  const isOut = s.status==="out";
+  const isTrade = s.clientType==="trade";
+  const samplesLines = (s.samplesText||"").split("\n").filter(Boolean).map(l=>l.trim()).join("<br>");
+
+  let overdue = false, reminderDue = false, daysOut = 0;
+  if(isOut){
+    if(isTrade){
+      daysOut = Math.floor((Date.now()-s.takenAt)/86400000);
+      reminderDue = daysOut >= TRADE_SAMPLE_REMINDER_DAYS;
+    } else {
+      overdue = Date.now() > s.dueAt;
+    }
+  }
+
+  const urgent = overdue || reminderDue;
+  const borderColor = urgent ? (isTrade ? "var(--border-pro,#7F77DD)" : "var(--terracotta)") : "var(--line)";
+  const bg = urgent ? (isTrade ? "#eeedfe" : "#fff6f4") : (isOut ? "#fdfcfa" : "var(--sand)");
+  const textColor = urgent ? (isTrade ? "#3C3489" : "var(--terracotta-dark)") : "var(--dark)";
+
+  let statusLabel = "";
+  if(overdue){
+    const hrsOver = Math.round((Date.now()-s.dueAt)/3600000);
+    statusLabel = `<span style="font-size:12px;color:var(--terracotta-dark);">Overdue ${hrsOver} hr${hrsOver===1?'':'s'}</span>`;
+  } else if(isOut && !isTrade){
+    const hrsLeft = Math.round((s.dueAt-Date.now())/3600000);
+    statusLabel = `<span style="font-size:12px;color:var(--muted);">Due in ${hrsLeft} hr${hrsLeft===1?'':'s'}</span>`;
+  } else if(isOut && isTrade){
+    statusLabel = `<span style="font-size:12px;color:${reminderDue ? '#3C3489' : 'var(--muted)'};">Out ${daysOut} day${daysOut===1?'':'s'}${reminderDue ? ' · reminder' : ''}</span>`;
+  } else {
+    const label = s.resolution==="returned" ? "Returned" : s.resolution==="lost" ? "Marked lost" : "Marked missing";
+    statusLabel = `<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--terracotta);color:#fff;">${label}</span>`;
+  }
+
+  return `
+    <div style="border:0.5px solid ${borderColor};background:${bg};border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;">
+        <span style="font-size:14px;font-weight:600;color:${textColor};">${s.clientName}${isTrade ? ' <span style="font-size:11px;font-weight:400;">· trade</span>' : ''}</span>
+        ${statusLabel}
+      </div>
+      ${s.clientPhone ? `<p style="font-size:12px;color:${textColor};margin:2px 0;">${s.clientPhone}</p>` : ""}
+      <p style="font-size:13px;color:${textColor};margin:4px 0;">${samplesLines}</p>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 8px;">Taken ${fmtTime(s.takenAt)} by ${s.takenBy}${s.resolvedAt ? ` · Closed ${fmtTime(s.resolvedAt)} by ${s.resolvedBy}` : ""}</p>
+      ${isOut ? `
+        <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <button class="btn-secondary" style="flex:1;font-size:12px;padding:6px 10px;" onclick="markSampleReturned('${s.id}')">Mark returned</button>
+          <button class="btn-secondary" style="flex:1;font-size:12px;padding:6px 10px;" onclick="toggleCloseOutOptions('${s.id}')">Close out…</button>
+        </div>
+        ${s.clientPhone ? `<button class="btn-secondary" style="width:100%;font-size:12px;padding:6px 10px;margin-bottom:6px;" onclick="openDraftReminderModal('${s.id}')"><i class="ti ti-message-circle-2" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i>Draft reminder</button>` : ""}
+        <div id="closeOpts-${s.id}" style="display:none;background:var(--card);border-radius:var(--radius);padding:8px 10px;">
+          <p style="font-size:11px;color:var(--muted);margin:0 0 6px;">Never returned — mark as</p>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-secondary" style="font-size:12px;padding:5px 12px;" onclick="closeSampleOut('${s.id}','lost')">Lost</button>
+            <button class="btn-secondary" style="font-size:12px;padding:5px 12px;" onclick="closeSampleOut('${s.id}','missing')">Missing</button>
+          </div>
+        </div>` : ""}
+    </div>`;
+}
+
+function smsHref(phone, body){
+  const cleanPhone = (phone||"").replace(/[^\d+]/g, "");
+  return `sms:${cleanPhone}?body=${encodeURIComponent(body)}`;
+}
+
+async function generateReminderDraft(s){
+  const isTrade = s.clientType==="trade";
+  let statusDesc;
+  if(isTrade){
+    const daysOut = Math.floor((Date.now()-s.takenAt)/86400000);
+    statusDesc = `out ${daysOut} day${daysOut===1?'':'s'} (open-ended loan, just checking in)`;
+  } else {
+    const overdue = Date.now() > s.dueAt;
+    const hrsOver = overdue ? Math.round((Date.now()-s.dueAt)/3600000) : null;
+    statusDesc = overdue ? `overdue by about ${hrsOver} hour${hrsOver===1?'':'s'}` : "due back soon";
+  }
+  const firstName = s.clientName.split(" ")[0];
+
+  const prompt = `Write a short, friendly text message reminding a client to return loaned fabric samples.
+Rep's first name (sign off as this person): ${s.takenBy.split(" ")[0]}
+Client's first name: ${firstName}
+Sample(s): ${s.samplesText || "the fabric samples"}
+Status: ${statusDesc}
+
+Keep it warm and casual, 2-3 sentences max. Return ONLY the message text itself — no preamble, no quotation marks, no explanation.`;
+
+  const response = await withTimeout(fetch("/api/ai", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, maxTokens: 300 })
+  }), 30000, "Draft generation");
+  if(!response.ok) throw new Error("Request failed");
+  const data = await response.json();
+  return data.content.map(item => item.type === "text" ? item.text : "").filter(Boolean).join("\n").trim();
+}
+
+function openDraftReminderModal(id){
+  const s = state.samplesOut.find(x=>x.id===id);
+  if(!s) return;
+
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Draft reminder</h3>
+        <div class="hint">To ${s.clientName} · ${s.clientPhone}</div>
+        <div id="draftBody">
+          <p style="font-size:13px;color:var(--muted);">Writing a draft…</p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()" style="flex:1;">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+
+  async function loadDraft(){
+    const draftBody = document.getElementById("draftBody");
+    if(!draftBody) return;
+    draftBody.innerHTML = `<p style="font-size:13px;color:var(--muted);">Writing a draft…</p>`;
+    try{
+      const text = await generateReminderDraft(s);
+      draftBody.innerHTML = `
+        <textarea id="reminderText" style="min-height:100px;">${text}</textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn-secondary" id="regenDraftBtn" style="flex:1;">Regenerate</button>
+          <button class="btn-primary" id="openMessagesBtn" style="flex:1;">Open in Messages</button>
+        </div>`;
+      document.getElementById("regenDraftBtn").onclick = loadDraft;
+      document.getElementById("openMessagesBtn").onclick = ()=>{
+        const finalText = document.getElementById("reminderText").value;
+        window.location.href = smsHref(s.clientPhone, finalText);
+      };
+    }catch(e){
+      draftBody.innerHTML = `<p style="font-size:13px;color:var(--terracotta-dark);">Couldn't generate a draft right now. You can still write one yourself.</p>
+        <textarea id="reminderText" style="min-height:100px;" placeholder="Type a reminder message..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn-secondary" id="regenDraftBtn" style="flex:1;">Try again</button>
+          <button class="btn-primary" id="openMessagesBtn" style="flex:1;">Open in Messages</button>
+        </div>`;
+      document.getElementById("regenDraftBtn").onclick = loadDraft;
+      document.getElementById("openMessagesBtn").onclick = ()=>{
+        const finalText = document.getElementById("reminderText").value;
+        window.location.href = smsHref(s.clientPhone, finalText);
+      };
+    }
+  }
+  loadDraft();
+}
+
+function toggleCloseOutOptions(id){
+  const el = document.getElementById("closeOpts-"+id);
+  if(el) el.style.display = el.style.display==="none" ? "block" : "none";
+}
+
+async function markSampleReturned(id){
+  const s = state.samplesOut.find(x=>x.id===id);
+  if(!s) return;
+  const selfRep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+  s.status = "returned";
+  s.resolution = "returned";
+  s.resolvedAt = Date.now();
+  s.resolvedBy = selfRep ? selfRep.name : "Unknown";
+  await saveState();
+  openSamplesOutModal();
+}
+
+async function closeSampleOut(id, reason){
+  const s = state.samplesOut.find(x=>x.id===id);
+  if(!s) return;
+  if(!await showConfirm(`Mark this loan to ${s.clientName} as ${reason}? This can't be undone.`)) return;
+  const selfRep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+  s.status = reason;
+  s.resolution = reason;
+  s.resolvedAt = Date.now();
+  s.resolvedBy = selfRep ? selfRep.name : "Unknown";
+  await saveState();
+  openSamplesOutModal();
+}
+
+function openSamplesOutModal(){
+  const root = document.getElementById("modalRoot");
+  const all = (state.samplesOut||[]).slice().sort((a,b)=>{
+    if((a.status==="out") !== (b.status==="out")) return a.status==="out" ? -1 : 1;
+    return b.takenAt - a.takenAt;
+  });
+  const outCount = all.filter(s=>s.status==="out").length;
+
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Samples tracker</h3>
+        <div class="hint">${outCount} currently loaned. Open to any rep — no code needed.</div>
+        <button class="btn-primary" id="logSampleBtn" style="width:100%;margin-bottom:14px;">Log sample loan</button>
+        <div id="samplesList">${all.length ? all.map(sampleCardHtml).join("") : `<div class="empty">No samples logged yet.</div>`}</div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()" style="flex:1;">Close</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("logSampleBtn").onclick = openLogSampleModal;
+}
+
+async function skipMyTurn(){
+  const fresh = await loadLocationState(currentLocationId);
+  state = fresh;
+
+  if(isLockActive(state)){
+    render();
+    await showAlert("Someone else is mid-action right now. Try again in a moment.");
+    return;
+  }
+
+  const active = activeSorted();
+  const upNext = active.length ? active[0] : null;
+  const selfRep = state.reps.find(r=>r.id===document.getElementById("whoAmI").value);
+
+  if(!upNext){
+    render();
+    await showAlert("No one is checked in and active at this location yet.");
+    return;
+  }
+  if(!selfRep || selfRep.id !== upNext.id){
+    render();
+    await showAlert(`It's ${upNext.name}'s turn right now, not yours.`);
+    return;
+  }
+  if(!await showConfirm(`Skip your turn, ${selfRep.name}? You'll move to the back of the line and no client will be logged.`)) return;
+
+  if(!state.skipLog) state.skipLog = [];
+  state.skipLog.push({ time: Date.now(), rep: selfRep.name });
+
+  const others = state.reps.filter(r=>r.id!==selfRep.id && r.status==="active");
+  others.forEach(r=>{ r.order = Math.max(1, r.order-1); });
+  selfRep.order = state.reps.length;
+
+  await saveState();
+  render();
+}
+
+async function openCoverUpModal(){
+  const fresh = await loadLocationState(currentLocationId);
+  state = fresh;
+
+  const active = activeSorted();
+  const coverageTargets = getCoverageTargets(state);
+  if(coverageTargets.length===0){
+    render();
+    await showAlert("No one currently needs coverage.");
+    return;
+  }
+  const initialTarget = coverageTargets[0];
+  const coveringOptionsFor = (targetId)=> active.filter(r=>r.id!==targetId);
+  let coveringOptions = coveringOptionsFor(initialTarget.id);
+  if(coveringOptions.length===0){
+    render();
+    await showAlert("No other rep is available to cover right now.");
+    return;
+  }
+  const defaultCoveringRep = coveringRepFor(active, initialTarget.id);
+
+  render();
+
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Cover this up</h3>
+        <div class="hint">Their spot in the rotation won't change. Multiple people can cover different clients at the same time — this doesn't block anyone else.</div>
+        <label>Who needs coverage</label>
+        <select class="full" id="coverageTarget">
+          ${coverageTargets.map(r=>`<option value="${r.id}">${coverageTargetLabel(r)}</option>`).join("")}
+        </select>
+        <label>Covering rep</label>
+        <select class="full" id="coveringRepSel">
+          ${coveringOptions.map(r=>`<option value="${r.id}" ${r.id===defaultCoveringRep.id?'selected':''}>${r.name}${r.id===defaultCoveringRep.id?' — last in rotation':''}</option>`).join("")}
+        </select>
+        <div id="noCoveringWarning" style="display:none;color:var(--terracotta);font-size:12px;margin-top:6px;">No one is available to cover for this person right now.</div>
+        <label>Client name</label>
+        <input type="text" id="clientName" placeholder="e.g. Alicia Ford" />
+        <label>New or returning</label>
+        <div class="radio-row" id="typeRow">
+          <div class="radio-opt picked" data-val="New">New</div>
+          <div class="radio-opt" data-val="Returning">Returning</div>
+        </div>
+        <label>End user or trade</label>
+        <div class="radio-row" id="categoryRow">
+          <div class="radio-opt picked" data-val="End User">End User</div>
+          <div class="radio-opt" data-val="Trade">Trade</div>
+        </div>
+        <label>Notes</label>
+        <textarea id="notesField" placeholder="Optional notes"></textarea>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelCoverUp">Cancel</button>
+          <button class="btn-primary" id="confirmCoverLog">Log it</button>
+        </div>
+      </div>
+    </div>`;
+
+  let currentTarget = initialTarget;
+
+  document.getElementById("coverageTarget").onchange = (e)=>{
+    currentTarget = coverageTargets.find(r=>r.id===e.target.value);
+    coveringOptions = coveringOptionsFor(currentTarget.id);
+    const sel = document.getElementById("coveringRepSel");
+    const warning = document.getElementById("noCoveringWarning");
+    const confirmBtn = document.getElementById("confirmCoverLog");
+    if(coveringOptions.length){
+      const def = coveringRepFor(active, currentTarget.id);
+      sel.style.display = "block";
+      sel.innerHTML = coveringOptions.map(r=>`<option value="${r.id}" ${def && r.id===def.id?'selected':''}>${r.name}${def && r.id===def.id?' — last in rotation':''}</option>`).join("");
+      warning.style.display = "none";
+      confirmBtn.disabled = false;
+    } else {
+      sel.style.display = "none";
+      warning.style.display = "block";
+      confirmBtn.disabled = true;
+    }
+  };
+
+  const typeRow = document.getElementById("typeRow");
+  let pickedType = "New";
+  typeRow.querySelectorAll(".radio-opt").forEach(el=>{
+    el.onclick = ()=>{
+      typeRow.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      pickedType = el.dataset.val;
+    };
+  });
+  const categoryRow = document.getElementById("categoryRow");
+  let pickedCategory = "End User";
+  categoryRow.querySelectorAll(".radio-opt").forEach(el=>{
+    el.onclick = ()=>{
+      categoryRow.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      pickedCategory = el.dataset.val;
+    };
+  });
+
+  document.getElementById("cancelCoverUp").onclick = async ()=>{
+    closeModal();
+    render();
+  };
+
+  document.getElementById("confirmCoverLog").onclick = async ()=>{
+    const clientName = document.getElementById("clientName").value.trim();
+    if(!clientName){ await showAlert("Enter a client name."); return; }
+    const coveringRepSel = document.getElementById("coveringRepSel");
+    if(!coveringRepSel.value){ await showAlert("No one is available to cover for this person."); return; }
+    // re-fetch fresh at submit time — other covers may have started in parallel
+    const fresh2 = await loadLocationState(currentLocationId);
+    state = fresh2;
+    const actingRep = state.reps.find(r=>r.id===coveringRepSel.value);
+    if(!actingRep){ await showAlert("That rep is no longer available. Try again."); closeModal(); render(); return; }
+    const notes = document.getElementById("notesField").value.trim();
+
+    const now = Date.now();
+    const logId = "log_" + now + "_" + Math.random().toString(36).slice(2,7);
+    state.log.push({
+      id: logId,
+      time: now,
+      rep: actingRep.name,
+      client: clientName,
+      type: pickedType,
+      category: pickedCategory,
+      coverage: true,
+      coveringFor: currentTarget.name,
+      coverageStart: now,
+      coverageEnd: null,
+      notes: notes ? `${notes} — picked up ${fmtTime(now)}, coverage in progress` : `Picked up ${fmtTime(now)}, coverage in progress`
+    });
+    // coverage: nothing in the rotation order moves — the covered rep keeps their spot,
+    // and the covering rep keeps theirs too, exactly like a regular coverage up.
+    // upsToday is intentionally not incremented here — coverage doesn't count as an up.
+    actingRep.lastUpTaken = Date.now();
+    actingRep.status = "with_client";
+    actingRep.activeCoverageLogId = logId;
+
+    if(!state.crossLocationNotes) state.crossLocationNotes = [];
+    state.crossLocationNotes.push({
+      id: "xnote_" + now + "_" + Math.random().toString(36).slice(2,7),
+      time: now,
+      homeRepName: currentTarget.name,
+      visitingLocationName: (LOCATIONS.find(l=>l.id===currentLocationId)||{}).name || currentLocationId,
+      visitingRepName: actingRep.name,
+      clientName,
+      notes,
+      read: false,
+      isCoverage: true
+    });
+
+    await saveState();
+    closeModal();
+    render();
+  };
+}
+
+// ---- Manager-gated actions ----
+let managerPinVerified = false;
+
+function openManagerToolsMenu(){
+  const root = document.getElementById("modalRoot");
+  const pauseLabel = state.rotationPaused ? "Resume rotation" : "Pause rotation";
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Manager tools</h3>
+        <div class="hint">You're in — move between tools freely without re-entering the code.</div>
+        <div style="display:grid;gap:8px;">
+          <button class="btn-secondary" id="mtManageReps" style="width:100%;">Manage reps</button>
+          <button class="btn-secondary" id="mtDashboard" style="width:100%;">Manager dashboard</button>
+          <button class="btn-secondary" id="mtSplitView" style="width:100%;">Side by side view</button>
+          <button class="btn-secondary" id="mtStatusGrid" style="width:100%;">Status grid</button>
+          <button class="btn-secondary" id="mtExportCsv" style="width:100%;">Export CSV</button>
+          <button class="btn-secondary" id="mtReports" style="width:100%;">Reports</button>
+          <button class="btn-secondary" id="mtResetDay" style="width:100%;">Reset day</button>
+          <button class="btn-secondary" id="pauseRotationBtn" style="width:100%;">${pauseLabel}</button>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()" style="flex:1;">Close</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("mtManageReps").onclick = openManageRepsModal;
+  document.getElementById("mtDashboard").onclick = openDashboardModal;
+  document.getElementById("mtSplitView").onclick = enterSplitView;
+  document.getElementById("mtStatusGrid").onclick = enterStatusGrid;
+  document.getElementById("mtExportCsv").onclick = openExportModal;
+  document.getElementById("mtReports").onclick = openReportsModal;
+  document.getElementById("mtResetDay").onclick = resetDayForLocation;
+  document.getElementById("pauseRotationBtn").onclick = togglePauseRotation;
+}
+
+function requireManagerPin(onSuccess){
+  if(managerPinVerified){ onSuccess(); return; }
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Manager access</h3>
+        <div class="hint">Enter the manager code to continue.</div>
+        <label>Code</label>
+        <input type="text" inputmode="numeric" id="pinInput" placeholder="••••" autocomplete="off" />
+        <div id="pinError" style="color:var(--terracotta);font-size:12px;margin-top:6px;display:none;">Incorrect code.</div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary" id="pinSubmit">Continue</button>
+        </div>
+      </div>
+    </div>`;
+  const submit = ()=>{
+    const val = document.getElementById("pinInput").value.trim();
+    if(val === MANAGER_PIN){ managerPinVerified = true; onSuccess(); }
+    else { document.getElementById("pinError").style.display = "block"; }
+  };
+  document.getElementById("pinSubmit").onclick = submit;
+  document.getElementById("pinInput").addEventListener("keydown", (e)=>{ if(e.key==="Enter") submit(); });
+}
+
+document.getElementById("samplesOutBtn").addEventListener("click", openSamplesOutModal);
+document.getElementById("renderErrorBtn").addEventListener("click", ()=>{
+  if(!lastRenderError){ showAlert("No error details available."); return; }
+  const when = new Date(lastRenderError.time).toLocaleString();
+  showAlert(`Section: ${lastRenderError.section}\nTime: ${when}\nMessage: ${lastRenderError.message}\n\nPlease share this exact text so it can be fixed.`);
+});
+document.getElementById("managerToolsBtn").addEventListener("click", ()=>requireManagerPin(openManagerToolsMenu));
+
+function renderManageRepsModal(){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Manage reps — ${(LOCATIONS.find(l=>l.id===currentLocationId)||{}).name}</h3>
+        <div class="hint">Removing someone deletes them from the rotation. Their past log entries stay untouched.</div>
+        <div id="repManageList"></div>
+        <div class="add-row">
+          <input type="text" id="newRepName" placeholder="New salesperson name" />
+          <button class="btn-primary" id="addRepBtn" style="flex:none;">Add</button>
+        </div>
+        <div style="text-align:center;margin-top:14px;">
+          <button class="btn-ghost" id="resetRosterBtn">Reset to default roster</button>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()" style="flex:1;">Done</button>
+        </div>
+      </div>
+    </div>`;
+
+  const listDiv = document.getElementById("repManageList");
+  listDiv.innerHTML = state.reps.length ? state.reps
+    .slice().sort((a,b)=>(a.order||999)-(b.order||999))
+    .map(r=>{
+      const suffix = r.status==="out" ? " · out" : r.status==="not_checked_in" ? (r.reason ? ` · ${r.reason}` : " · not checked in") : r.status==="checked_out" ? " · checked out" : "";
+      return `
+      <div class="manage-row">
+        <span>${r.name}${suffix}</span>
+        <button class="remove-x" onclick="removeRep('${r.id}')" title="Remove ${r.name}">&times;</button>
+      </div>`;
+    }).join("") : `<div class="empty">No reps yet.</div>`;
+
+  document.getElementById("addRepBtn").onclick = async ()=>{
+    const input = document.getElementById("newRepName");
+    const name = input.value.trim();
+    if(!name) return;
+    await addRep(name);
+    renderManageRepsModal();
+    render();
+  };
+  document.getElementById("resetRosterBtn").onclick = async ()=>{
+    if(!await showConfirm("Replace the current roster with this location's default names? Today's log stays untouched.")) return;
+    await resetToDefaultRoster();
+    renderManageRepsModal();
+    render();
+  };
+}
+function openManageRepsModal(){ renderManageRepsModal(); }
+
+async function addRep(name){
+  state.reps.push({
+    id: "r" + Date.now() + Math.floor(Math.random()*1000),
+    name, order: null, status: "not_checked_in",
+    reason: null, expectedReturn: null, arrivalTime: null, checkedInAt: null,
+    upsToday: 0, lastUpTaken: null, checkedInDeviceId: null, activeCoverageLogId: null
+  });
+  await saveState();
+}
+
+async function removeRep(repId){
+  const rep = state.reps.find(r=>r.id===repId);
+  if(!rep) return;
+  if(!await showConfirm(`Remove ${rep.name} from the rotation?`)) return;
+  const removedOrder = rep.order;
+  state.reps = state.reps.filter(r=>r.id!==repId);
+  state.reps.forEach(r=>{ if(r.order > removedOrder) r.order -= 1; });
+  await saveState();
+  renderManageRepsModal();
+  render();
+}
+
+async function resetToDefaultRoster(){
+  const names = LOCATION_DEFAULT_REPS[currentLocationId] || [];
+  state.reps = names.map((name,i)=>({
+    id: "r"+i+"_"+Date.now()+"_"+i, name, order: null, status: "not_checked_in",
+    reason: null, expectedReturn: null, arrivalTime: null, checkedInAt: null,
+    upsToday: 0, lastUpTaken: null, checkedInDeviceId: null, activeCoverageLogId: null
+  }));
+  await saveState();
+}
+
+// ---- Manager dashboard (cross-location) ----
+// ---- Ask the board / Weekly summary (traffic analysis) ----
+async function gatherTrafficContext(scope){
+  const targetLocs = scope==="both" ? LOCATIONS : LOCATIONS.filter(l=>l.id===scope);
+  const bodies = await Promise.all(targetLocs.map(async loc=>{
+    const s = await loadLocationState(loc.id);
+    return { loc, s };
+  }));
+
+  const cutoff = Date.now() - (TRAFFIC_AI_CONTEXT_DAYS * 24 * 60 * 60 * 1000);
+  const lines = [];
+  bodies.forEach(({loc, s})=>{
+    const entries = (s.log||[]).filter(e=>e.time >= cutoff).sort((a,b)=>a.time-b.time);
+    entries.forEach(e=>{
+      const d = new Date(e.time);
+      const tags = [];
+      if(e.coverage) tags.push("coverage");
+      if(e.visitingClient) tags.push("visiting-client");
+      if(e.appointment) tags.push("appointment");
+      if(e.handoff) tags.push("handoff");
+      lines.push(`${loc.name} | ${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} | ${e.rep} | ${e.type}/${e.category||'?'}${tags.length ? ' | '+tags.join(',') : ''}`);
+    });
+  });
+
+  return lines.length ? lines.join("\n") : `No client visits logged in the available data (last ${TRAFFIC_AI_CONTEXT_DAYS} days).`;
+}
+
+async function callClaudeForBoard(prompt){
+  const response = await withTimeout(fetch("/api/ai", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, maxTokens: 500 })
+  }), 30000, "Request");
+  if(!response.ok) throw new Error("Request failed");
+  const data = await response.json();
+  return data.content.map(item => item.type === "text" ? item.text : "").filter(Boolean).join("\n").trim();
+}
+
+async function askTheBoard(question){
+  const answerDiv = document.getElementById("askBoardAnswer");
+  if(!answerDiv) return;
+  answerDiv.innerHTML = `<div class="ai-answer-box"><p style="font-size:13px;color:var(--muted);">Thinking…</p></div>`;
+  try{
+    const context = await gatherTrafficContext("both");
+    const prompt = `You are analyzing foot traffic data for a furniture showroom with two locations, Aventura and Boca. Data is limited to the last ${TRAFFIC_AI_CONTEXT_DAYS} days. Each line is one client visit: Location | Date Time | Rep | Type/Category | tags.
+
+Data:
+${context}
+
+Question: ${question}
+
+Answer in 2-4 sentences, concrete and specific using the data above. If the data can't fully answer the question (e.g. not enough history for a trend), say so briefly rather than guessing.`;
+    const text = await callClaudeForBoard(prompt);
+    answerDiv.innerHTML = `
+      <div class="ai-answer-box">
+        <div class="ai-answer-label"><span>Answer</span><span><i class="ti ti-sparkles" style="font-size:11px;vertical-align:-1px;"></i> AI-generated</span></div>
+        <p style="font-size:13px;margin:0;">${text}</p>
+      </div>`;
+  }catch(e){
+    answerDiv.innerHTML = `<div class="ai-answer-box"><p style="font-size:13px;color:var(--terracotta-dark);">Couldn't get an answer right now — try again in a moment.</p></div>`;
+  }
+}
+
+async function generateWeeklySummary(scope){
+  const body = document.getElementById("weeklySummaryBody");
+  if(!body) return;
+  body.innerHTML = `<p style="font-size:12px;color:var(--muted);">Writing a summary…</p>`;
+  try{
+    const context = await gatherTrafficContext(scope);
+    const scopeLabel = scope==="both" ? "both Aventura and Boca combined" : (LOCATIONS.find(l=>l.id===scope)||{}).name;
+    const prompt = `You are summarizing foot traffic for a furniture showroom (${scopeLabel}) based on the last ${TRAFFIC_AI_CONTEXT_DAYS} days of visit data. Each line is one client visit: Location | Date Time | Rep | Type/Category | tags.
+
+Data:
+${context}
+
+Write a short summary (3-4 sentences) focused on traffic patterns: volume, busiest times/days, new vs returning mix, and anything notable about coverage, appointments, or cross-location activity. Be concrete and specific. Plain text only, no headers or bullet points.`;
+    const text = await callClaudeForBoard(prompt);
+    body.innerHTML = `<p style="font-size:13px;line-height:1.6;margin:0;">${text}</p>`;
+  }catch(e){
+    body.innerHTML = `<p style="font-size:13px;color:var(--terracotta-dark);">Couldn't generate a summary right now — try again in a moment.</p>`;
+  }
+}
+
+async function openDashboardModal(){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal wide">
+        <h3>Manager dashboard</h3>
+        <div class="hint">Auto-updates every few seconds while open.</div>
+        <div id="dashBody" class="dash-grid"><div class="empty">Loading…</div></div>
+
+        <div class="ai-card">
+          <div class="ai-card-header"><i class="ti ti-message-circle-2" style="font-size:16px;"></i>Ask the board</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <input type="text" id="askBoardInput" placeholder="What are our busiest hours this week?" style="flex:1;" />
+            <button class="btn-secondary" id="askBoardBtn" style="padding:0 14px;"><i class="ti ti-arrow-right"></i></button>
+          </div>
+          <div class="ai-chip-row">
+            <span class="ai-chip" data-q="Aventura vs. Boca traffic this week?">Aventura vs. Boca traffic?</span>
+            <span class="ai-chip" data-q="Walk-ins vs. appointments this week?">Walk-ins vs. appointments?</span>
+            <span class="ai-chip" data-q="Is traffic trending up or down?">Is traffic trending up or down?</span>
+          </div>
+          <div id="askBoardAnswer"></div>
+        </div>
+
+        <div class="ai-card">
+          <div class="ai-card-header"><i class="ti ti-sparkles" style="font-size:16px;"></i>Weekly summary</div>
+          <div class="ai-loc-toggle" id="summaryLocToggle">
+            <span class="ai-loc-pill picked" data-loc="aventura">Aventura</span>
+            <span class="ai-loc-pill" data-loc="boca">Boca</span>
+            <span class="ai-loc-pill" data-loc="both">Both</span>
+          </div>
+          <div id="weeklySummaryBody"><p style="font-size:12px;color:var(--muted);">Tap Regenerate to generate a summary.</p></div>
+          <button class="btn-secondary" id="regenSummaryBtn" style="width:100%;margin-top:10px;"><i class="ti ti-refresh" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i>Regenerate</button>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" id="dashCloseBtn" style="flex:1;">Close</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("dashCloseBtn").addEventListener("click", ()=>{ closeModal(); render(); });
+
+  let summaryLoc = "aventura";
+  document.querySelectorAll("#summaryLocToggle .ai-loc-pill").forEach(el=>{
+    el.onclick = ()=>{
+      document.querySelectorAll("#summaryLocToggle .ai-loc-pill").forEach(o=>o.classList.remove("picked"));
+      el.classList.add("picked");
+      summaryLoc = el.dataset.loc;
+    };
+  });
+  document.getElementById("regenSummaryBtn").onclick = ()=>generateWeeklySummary(summaryLoc);
+
+  document.getElementById("askBoardBtn").onclick = ()=>{
+    const q = document.getElementById("askBoardInput").value.trim();
+    if(q) askTheBoard(q);
+  };
+  document.querySelectorAll(".ai-chip").forEach(chip=>{
+    chip.onclick = ()=>{
+      document.getElementById("askBoardInput").value = chip.dataset.q;
+      askTheBoard(chip.dataset.q);
+    };
+  });
+
+  await renderDashboardBody();
+  if(dashboardPollTimer) clearInterval(dashboardPollTimer);
+  dashboardPollTimer = setInterval(renderDashboardBody, 6000);
+}
+
+async function renderDashboardBody(){
+  const dashBody = document.getElementById("dashBody");
+  if(!dashBody) return; // modal was closed since the last tick
+
+  const bodies = await Promise.all(LOCATIONS.map(async loc=>{
+    const s = await loadLocationState(loc.id);
+    return { loc, s };
+  }));
+
+  // same fix as split view / status grid — keep the shared state fresh so
+  // closing the dashboard doesn't drop back to stale data
+  const currentLocMatch = bodies.find(b=>b.loc.id===currentLocationId);
+  if(currentLocMatch) state = currentLocMatch.s;
+
+  dashBody.innerHTML = bodies.map(({loc, s})=>{
+    const activeReps = s.reps.filter(r=>r.status==="active").sort((a,b)=>a.order-b.order);
+    const withClientReps = s.reps.filter(r=>r.status==="with_client");
+    const pendingReps = s.reps.filter(r=>r.status==="not_checked_in");
+    const checkedOutReps = s.reps.filter(r=>r.status==="checked_out");
+    const upNext = activeReps[0];
+    const todaysLog = todaysEntries(s.log);
+    const realUpsToday = todaysLog.filter(e=>!e.coverage && !e.visitingClient).length;
+    const newCount = todaysLog.filter(e=>e.type==="New").length;
+    const returningCount = todaysLog.filter(e=>e.type==="Returning").length;
+    const coverageCount = todaysLog.filter(e=>e.coverage).length;
+    const visitingCount = todaysLog.filter(e=>e.visitingClient).length;
+    const todaysSkips = todaysEntries(s.skipLog || []);
+    const skipCounts = {};
+    todaysSkips.forEach(e=>{ skipCounts[e.rep] = (skipCounts[e.rep]||0) + 1; });
+    const skipBreakdown = Object.entries(skipCounts)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([name,count])=>`${name} (${count})`)
+      .join(", ");
+    const staleCoverage = getStaleCoverageSessions(s);
+    const todaysCrossNotes = todaysEntries(s.crossLocationNotes || []).sort((a,b)=>b.time-a.time);
+    const samplesOutList = (s.samplesOut||[]).filter(x=>x.status==="out");
+    const samplesOverdue = samplesOutList.filter(sampleNeedsAttention);
+
+    return `
+      <div class="dash-card">
+        <h4>${loc.name}${s.rotationPaused ? ' <span style="color:var(--terracotta);font-size:12px;">(Paused)</span>' : ''}</h4>
+        <div class="dash-sub">${s.reps.length} rep${s.reps.length===1?'':'s'} on roster</div>
+        <div class="stat-row"><span class="stat-label">Ups today</span><span class="stat-val">${realUpsToday}</span></div>
+        <div class="stat-row"><span class="stat-label">New / Returning</span><span class="stat-val">${newCount} / ${returningCount}</span></div>
+        <div class="stat-row"><span class="stat-label">Coverage ups</span><span class="stat-val">${coverageCount}</span></div>
+        <div class="stat-row"><span class="stat-label">Visiting-client assists</span><span class="stat-val">${visitingCount}</span></div>
+        <div class="stat-row"><span class="stat-label">Skips today</span><span class="stat-val">${todaysSkips.length}</span></div>
+        <div class="stat-row"><span class="stat-label">Available now</span><span class="stat-val">${activeReps.length}</span></div>
+        <div class="stat-row"><span class="stat-label">With a client</span><span class="stat-val">${withClientReps.length}</span></div>
+        <div class="stat-row"><span class="stat-label">Not checked in</span><span class="stat-val">${pendingReps.length}</span></div>
+        <div class="stat-row"><span class="stat-label">Checked out for day</span><span class="stat-val">${checkedOutReps.length}</span></div>
+        <div class="stat-row"><span class="stat-label">Samples out</span><span class="stat-val">${samplesOutList.length}</span></div>
+        ${pendingReps.filter(r=>r.reason).length ? `<div class="dash-sub" style="margin-top:2px;">Stepped out: ${pendingReps.filter(r=>r.reason).map(r=>`${r.name} (${r.reason})`).join(", ")}</div>` : ""}
+        ${skipBreakdown ? `<div class="dash-sub" style="margin-top:8px;">Skipped by: ${skipBreakdown}</div>` : ""}
+        ${staleCoverage.length ? `
+          <div style="background:#fff6f4;border:1px solid var(--terracotta);border-radius:8px;padding:8px 10px;margin-top:10px;">
+            <p style="font-size:12px;font-weight:700;color:var(--terracotta-dark);margin:0 0 4px;">⚠ Coverage running long</p>
+            ${staleCoverage.map(x=>`<p style="font-size:12px;color:var(--terracotta-dark);margin:0;">${x.entry.rep} ${x.entry.visitingClient ? `with visiting client ${x.entry.client}` : `covering for ${x.entry.coveringFor}`} — ${x.elapsedMin} min</p>`).join("")}
+          </div>` : ""}
+        ${samplesOverdue.length ? `
+          <div style="background:#fff6f4;border:1px solid var(--terracotta);border-radius:8px;padding:8px 10px;margin-top:10px;">
+            <p style="font-size:12px;font-weight:700;color:var(--terracotta-dark);margin:0 0 4px;">⚠ Samples need attention</p>
+            ${samplesOverdue.map(x=> x.clientType==="trade"
+              ? `<p style="font-size:12px;color:var(--terracotta-dark);margin:0;">${x.clientName} (trade) — out ${Math.floor((Date.now()-x.takenAt)/86400000)} days</p>`
+              : `<p style="font-size:12px;color:var(--terracotta-dark);margin:0;">${x.clientName} — ${Math.round((Date.now()-x.dueAt)/3600000)} hr overdue</p>`
+            ).join("")}
+          </div>` : ""}
+        ${todaysCrossNotes.length ? `
+          <div style="background:var(--sand);border-radius:8px;padding:8px 10px;margin-top:10px;">
+            <p style="font-size:12px;font-weight:700;color:var(--dark);margin:0 0 4px;">Clients helped by others today</p>
+            ${todaysCrossNotes.map(n=>`<p style="font-size:12px;color:var(--dark);margin:0 0 2px;">${n.clientName} — ${n.isCoverage ? `covered by ${n.visitingRepName} for ${n.homeRepName}` : `helped by ${n.visitingRepName} at ${n.visitingLocationName}${n.homeRepName ? ` (usually ${n.homeRepName})` : ""}`}</p>`).join("")}
+          </div>` : ""}
+        ${upNext ? `<div class="dash-upnext">Up next: <strong>${upNext.name}</strong></div>` : `<div class="dash-upnext">No one active right now</div>`}
+      </div>`;
+  }).join("");
+}
+
+// ---- CSV export ----
+function csvEscape(val){
+  const s = (val===null || val===undefined) ? "" : String(val);
+  if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+
+function logToCsv(rows){
+  const header = ["Location","Date","Time","Salesperson","Client","New or Returning","Client Category","Appointment","Handoff","Handoff From","Coverage","Covering For","Visiting Client","Home Rep","Home Location","Coverage Picked Up","Coverage Completed","Coverage Duration (min)","Notes"];
+  const lines = [header.map(csvEscape).join(",")];
+  rows.forEach(r=>{
+    const d = new Date(r.time);
+    const pickedUp = r.coverageStart ? new Date(r.coverageStart).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : "";
+    const completed = r.coverageEnd ? new Date(r.coverageEnd).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : ((r.coverage || r.visitingClient) ? "In progress" : "");
+    const durationMin = (r.coverageStart && r.coverageEnd) ? Math.max(1, Math.round((r.coverageEnd - r.coverageStart) / 60000)) : "";
+    lines.push([
+      r.location,
+      d.toLocaleDateString(),
+      d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}),
+      r.rep, r.client, r.type,
+      r.category || "",
+      r.appointment ? "Yes" : "No",
+      r.handoff ? "Yes" : "No",
+      r.handoffFrom || "",
+      r.coverage ? "Yes" : "No",
+      r.coveringFor || "",
+      r.visitingClient ? "Yes" : "No",
+      r.homeRepName || "",
+      r.homeLocationName || "",
+      pickedUp,
+      completed,
+      durationMin,
+      r.notes || ""
+    ].map(csvEscape).join(","));
+  });
+  return lines.join("\n");
+}
+
+async function downloadCsv(filename, csvText){
+  // The artifact viewer never grants a plain <a download> or blob-URL
+  // click any real permission to save a file to the visitor's device —
+  // it silently does nothing there. The `downloads` capability is the
+  // real, viewer-consented way to hand someone a generated file, so it's
+  // tried first; the classic anchor trick is kept only as a fallback for
+  // contexts where this runs as a plain page outside the artifact viewer
+  // (e.g. saved locally and opened directly in a browser).
+  try{
+    if(typeof window.claude !== "undefined" && window.claude && window.claude.use){
+      const downloads = await window.claude.use("downloads");
+      if(downloads){
+        const blob = new Blob([csvText], {type:"text/csv;charset=utf-8;"});
+        const result = await downloads.save({ filename, data: blob });
+        return result;
+      }
+    }
+  }catch(err){
+    if(err && err.code === "declined") return; // viewer said no — nothing more to do
+    console.warn("downloads capability unavailable, falling back:", err);
+  }
+  try{
+    const blob = new Blob([csvText], {type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(err){
+    await showAlert("Couldn't save the CSV file in this view. Try opening the board in its own browser tab and exporting from there.");
+  }
+}
+
+async function exportCurrentLocationCsv(){
+  closeModal();
+  const locName = (LOCATIONS.find(l=>l.id===currentLocationId)||{}).name || currentLocationId;
+  const rows = state.log.map(e=>({...e, location: locName}));
+  const csv = logToCsv(rows);
+  await downloadCsv(`up-log-${currentLocationId}-${localDateStr(new Date())}.csv`, csv);
+}
+
+async function exportAllLocationsCsv(){
+  closeModal();
+  const bodies = await Promise.all(LOCATIONS.map(async loc=>{
+    const s = await loadLocationState(loc.id);
+    return s.log.map(e=>({...e, location: loc.name}));
+  }));
+  const rows = bodies.flat().sort((a,b)=>a.time-b.time);
+  const csv = logToCsv(rows);
+  await downloadCsv(`up-log-all-locations-${localDateStr(new Date())}.csv`, csv);
+}
+
+function openExportModal(){
+  const locName = (LOCATIONS.find(l=>l.id===currentLocationId)||{}).name || currentLocationId;
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal">
+        <h3>Export CSV</h3>
+        <div class="hint">Choose what to include.</div>
+        <div class="modal-actions" style="flex-direction:column;gap:8px;">
+          <button class="btn-primary" id="exportThisLocBtn" style="width:100%;">This location — ${locName}</button>
+          <button class="btn-secondary" id="exportAllLocBtn" style="width:100%;">Both locations, combined</button>
+          <button class="btn-secondary" onclick="closeModal()" style="width:100%;">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("exportThisLocBtn").addEventListener("click", exportCurrentLocationCsv);
+  document.getElementById("exportAllLocBtn").addEventListener("click", exportAllLocationsCsv);
+}
+
+document.getElementById("freeLogBtn").addEventListener("click", openFreeLogModal);
+
+async function togglePauseRotation(){
+  if(state.rotationPaused){
+    openResumeReorderModal();
+  } else {
+    closeModal();
+    if(!await showConfirm("Pause the rotation? Turn order won't be enforced until a manager resumes it.")) return;
+    state.rotationPaused = true;
+    await saveState();
+    render();
+  }
+}
+
+async function resetDayForLocation(){
+  closeModal();
+  const locName = (LOCATIONS.find(l=>l.id===currentLocationId)||{}).name || currentLocationId;
+  if(!await showConfirm(`Reset today's rotation for ${locName}? Everyone will need to check in again. Log history is kept.`)) return;
+  state.reps.forEach(r=>{
+    r.status = "not_checked_in";
+    r.order = null;
+    r.reason = null;
+    r.expectedReturn = null;
+    r.checkedInAt = null;
+    r.activeCoverageLogId = null;
+    r.checkedInDeviceId = null;
+  });
+  state.rotationPaused = false;
+  await saveState();
+  render();
+}
+
+// ---- Reports ----
+let repChartInstance = null;
+let trendChartInstance = null;
+
+function toDateInputValue(d){ return localDateStr(d); }
+
+function openReportsModal(){
+  closeModal();
+  const root = document.getElementById("modalRoot");
+  const today = new Date();
+  const weekAgo = new Date(today.getTime() - 6*24*60*60*1000);
+
+  root.innerHTML = `
+    <div class="overlay">
+      <div class="modal wide">
+        <h3>Reports</h3>
+        <div class="hint">Ups by rep and new vs. returning trend, from the log.</div>
+
+        <div class="report-controls">
+          <div>
+            <label>Location</label>
+            <select class="full" id="reportLocation">
+              ${LOCATIONS.map(l=>`<option value="${l.id}" ${l.id===currentLocationId?'selected':''}>${l.name}</option>`).join("")}
+            </select>
+          </div>
+          <div>
+            <label>From</label>
+            <input type="date" id="reportFrom" value="${toDateInputValue(weekAgo)}" />
+          </div>
+          <div>
+            <label>To</label>
+            <input type="date" id="reportTo" value="${toDateInputValue(today)}" />
+          </div>
+        </div>
+
+        <div class="kpi-grid" id="reportKpis"></div>
+
+        <p class="chart-title">Ups by rep</p>
+        <div style="position:relative;width:100%;height:240px;margin-bottom:1.75rem;">
+          <canvas id="repChart" role="img" aria-label="Bar chart of ups by salesperson for the selected date range">Loading chart data.</canvas>
+        </div>
+
+        <p class="chart-title">New vs. returning, by day</p>
+        <div class="chart-legend">
+          <span><span class="legend-dot" style="background:#2a78d6;"></span>New</span>
+          <span><span class="legend-dot" style="background:#eb6834;"></span>Returning</span>
+        </div>
+        <div style="position:relative;width:100%;height:220px;">
+          <canvas id="trendChart" role="img" aria-label="Line chart of new versus returning ups per day for the selected date range">Loading chart data.</canvas>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()" style="flex:1;">Close</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById("reportLocation").addEventListener("change", renderReportCharts);
+  document.getElementById("reportFrom").addEventListener("change", renderReportCharts);
+  document.getElementById("reportTo").addEventListener("change", renderReportCharts);
+
+  renderReportCharts();
+}
+
+async function renderReportCharts(){
+  const locId = document.getElementById("reportLocation").value;
+  const fromVal = document.getElementById("reportFrom").value;
+  const toVal = document.getElementById("reportTo").value;
+  if(!fromVal || !toVal) return;
+
+  const fromTs = new Date(fromVal + "T00:00:00").getTime();
+  const toTs = new Date(toVal + "T23:59:59").getTime();
+
+  const s = await loadLocationState(locId);
+  const rows = s.log.filter(e => e.time >= fromTs && e.time <= toTs);
+
+  const kpiDiv = document.getElementById("reportKpis");
+  const realRows = rows.filter(e=>!e.coverage && !e.visitingClient);
+  const newCount = rows.filter(e=>e.type==="New").length;
+  const returningCount = rows.filter(e=>e.type==="Returning").length;
+  const coverageCount = rows.filter(e=>e.coverage).length;
+  const newPct = rows.length ? Math.round((newCount/rows.length)*100) : 0;
+  kpiDiv.innerHTML = `
+    <div class="kpi-card"><p class="kpi-label">Total ups</p><p class="kpi-val">${realRows.length}</p></div>
+    <div class="kpi-card"><p class="kpi-label">New clients</p><p class="kpi-val">${newPct}%</p></div>
+    <div class="kpi-card"><p class="kpi-label">Coverage ups</p><p class="kpi-val">${coverageCount}</p></div>`;
+
+  // ups by rep — excludes coverage and visiting-client assists, since those
+  // don't consume a turn and shouldn't count toward the fairness comparison
+  const repCounts = {};
+  rows.filter(e=>!e.coverage && !e.visitingClient).forEach(e=>{ repCounts[e.rep] = (repCounts[e.rep]||0) + 1; });
+  const repLabels = Object.keys(repCounts).sort((a,b)=>repCounts[b]-repCounts[a]);
+  const repData = repLabels.map(name=>repCounts[name]);
+
+  if(repChartInstance) repChartInstance.destroy();
+  repChartInstance = new Chart(document.getElementById("repChart"), {
+    type: "bar",
+    data: { labels: repLabels, datasets: [{ data: repData, backgroundColor: "#2a78d6", borderRadius: 4, maxBarThickness: 24 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { color: "#898781", precision: 0 }, grid: { color: "#e1e0d9" } },
+        x: { ticks: { color: "#898781" }, grid: { display: false } }
+      }
+    }
+  });
+
+  // new vs returning, by day
+  const dayMs = 24*60*60*1000;
+  const days = [];
+  for(let t = fromTs; t <= toTs; t += dayMs){
+    days.push(new Date(t));
+  }
+  const dayLabels = days.map(d=>d.toLocaleDateString([], {month:'short', day:'numeric'}));
+  const newByDay = days.map(d=>rows.filter(e=>e.type==="New" && sameDay(e.time, d)).length);
+  const returningByDay = days.map(d=>rows.filter(e=>e.type==="Returning" && sameDay(e.time, d)).length);
+
+  if(trendChartInstance) trendChartInstance.destroy();
+  trendChartInstance = new Chart(document.getElementById("trendChart"), {
+    type: "line",
+    data: {
+      labels: dayLabels,
+      datasets: [
+        { label:"New", data:newByDay, borderColor:"#2a78d6", backgroundColor:"rgba(42,120,214,0.1)", fill:true, tension:0.3, borderWidth:2, pointRadius:3 },
+        { label:"Returning", data:returningByDay, borderColor:"#eb6834", backgroundColor:"rgba(235,104,52,0.1)", fill:true, tension:0.3, borderWidth:2, pointRadius:3, borderDash:[5,3] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { color: "#898781", precision: 0 }, grid: { color: "#e1e0d9" } },
+        x: { ticks: { color: "#898781", autoSkip: false, maxRotation: 45 }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function sameDay(ts, dateObj){
+  const d = new Date(ts);
+  return d.getFullYear()===dateObj.getFullYear() && d.getMonth()===dateObj.getMonth() && d.getDate()===dateObj.getDate();
+}
+
+document.getElementById("pastClientNotesBtn").addEventListener("click", openCrossNotifyModal);
+document.getElementById("logHistoryBtn").addEventListener("click", openLogHistoryModal);
+document.getElementById("takeUpBtn").addEventListener("click", openTakeUpModal);
+document.getElementById("coverUpBtn").addEventListener("click", openCoverUpModal);
+document.getElementById("skipTurnBtn").addEventListener("click", skipMyTurn);
+document.getElementById("logAppointmentBtn").addEventListener("click", openLogAppointmentModal);
+document.getElementById("stepBtn").addEventListener("click", ()=>{
+  const whoId = document.getElementById("whoAmI").value;
+  handleRowAction(whoId);
+});
+document.getElementById("checkInBigBtn").addEventListener("click", ()=>{
+  const whoId = document.getElementById("whoAmI").value;
+  handleRowAction(whoId);
+});
+document.getElementById("doneWithClientBigBtn").addEventListener("click", ()=>{
+  const whoId = document.getElementById("whoAmI").value;
+  handleRowAction(whoId);
+});
+document.getElementById("backInBigBtn").addEventListener("click", ()=>{
+  const whoId = document.getElementById("whoAmI").value;
+  handleRowAction(whoId);
+});
+document.getElementById("locationSelector").addEventListener("change", (e)=>{
+  switchLocation(e.target.value);
+});
+
+// ---- Split (side by side) view ----
+let splitPollTimer = null;
+
+function repRowHtml(r, lowestActiveOrder){
+  const isTop = r.status==="active" && r.order===lowestActiveOrder;
+  const meta = r.status==="not_checked_in"
+    ? (r.reason ? `${r.reason}${r.expectedReturn ? " · back "+r.expectedReturn : ""}` : "Not checked in yet")
+    : r.status==="checked_out"
+      ? "Checked out for the day"
+      : r.status==="out"
+        ? `${r.reason||"Out"}${r.expectedReturn ? " · back "+r.expectedReturn : ""}`
+        : r.status==="with_client"
+          ? "With a client"
+          : `${r.upsToday} up${r.upsToday===1?"":"s"} today`;
+  const rowClass = (r.status==="not_checked_in" || r.status==="checked_out") ? "pending" : (r.status==="out" ? "out" : (r.status==="with_client" ? "busy" : ""));
+  return `
+    <div class="rep-row ${isTop?'active':''} ${rowClass}">
+      <div class="badge">${(r.status==='active' || r.status==='out' || r.status==='with_client') ? r.order : '–'}</div>
+      <div>
+        <div class="rep-name">${r.name}</div>
+        <div class="rep-meta">${meta}</div>
+      </div>
+    </div>`;
+}
+
+function logEntryHtml(entry){
+  return `
+    <div class="log-entry">
+      <div class="log-top">
+        <span class="log-client">${entry.client}
+          <span class="tag ${entry.type==='New'?'tag-new':'tag-returning'}">${entry.type}</span>
+          ${entry.category ? `<span class="tag ${entry.category==='Trade'?'tag-trade':'tag-new'}">${entry.category}</span>` : ""}
+          ${entry.appointment ? `<span class="tag tag-appointment">Appointment</span>` : ""}
+          ${entry.handoff ? `<span class="tag tag-handoff">Handoff${entry.handoffFrom ? ' from '+entry.handoffFrom : ''}</span>` : ""}
+            ${entry.reassignedFrom ? `<span class="tag tag-handoff">Reassigned from ${entry.reassignedFrom}</span>` : ""}
+          ${entry.coverage ? `<span class="tag tag-coverage">Coverage</span>` : ""}
+        </span>
+        <span class="log-time">${fmtTime(entry.time)}</span>
+      </div>
+      <div class="log-meta">${entry.rep}${entry.coverage && entry.coveringFor ? " · covering for "+entry.coveringFor : ""}${entry.notes ? " · "+entry.notes : ""}</div>
+    </div>`;
+}
+
+async function renderSplitView(){
+  const splitBody = document.getElementById("splitBody");
+  const bodies = await Promise.all(LOCATIONS.map(async loc=>{
+    const s = await loadLocationState(loc.id);
+    return { loc, s };
+  }));
+
+  // keep the main app's shared state fresh too, so exiting back to single
+  // view never renders stale data (previously this only updated split
+  // view's own local copy, leaving the global state frozen the whole time)
+  const currentLocMatch = bodies.find(b=>b.loc.id===currentLocationId);
+  if(currentLocMatch) state = currentLocMatch.s;
+
+  splitBody.innerHTML = bodies.map(({loc, s})=>{
+    const statusRank = { active: 0, with_client: 1, out: 2, not_checked_in: 3, checked_out: 4 };
+    const sortedReps = [...s.reps].sort((a,b)=>{
+      const ra = statusRank[a.status] ?? 5, rb = statusRank[b.status] ?? 5;
+      if(ra!==rb) return ra-rb;
+      if(a.status==="not_checked_in" || a.status==="checked_out") return a.name.localeCompare(b.name);
+      return (a.order||0)-(b.order||0);
+    });
+    const activeOrders = s.reps.filter(r=>r.status==="active").map(r=>r.order);
+    const lowestActiveOrder = activeOrders.length ? Math.min(...activeOrders) : null;
+    const todaysLog = todaysEntries(s.log).sort((a,b)=>b.time-a.time);
+    const todaysForCounts = todaysLog;
+    const repsWithCounts = sortedReps.map(r=>({...r, upsToday: todaysForCounts.filter(e=>e.rep===r.name && !e.coverage && !e.visitingClient).length}));
+    const recentLog = todaysLog.slice(0,8);
+
+    return `
+      <div class="split-card">
+        <h4>${loc.name}</h4>
+        <h5>Rotation</h5>
+        ${repsWithCounts.length ? repsWithCounts.map(r=>repRowHtml(r, lowestActiveOrder)).join("") : `<div class="empty">No reps yet.</div>`}
+        <h5>Today's log</h5>
+        ${recentLog.length ? recentLog.map(logEntryHtml).join("") : `<div class="empty">No client ups logged yet today.</div>`}
+      </div>`;
+  }).join("");
+}
+
+function enterSplitView(){
+  closeModal();
+  document.querySelector(".wrap").classList.add("wide");
+  document.getElementById("singleView").style.display = "none";
+  document.getElementById("splitView").style.display = "block";
+  document.querySelector(".location-bar").style.display = "none";
+  document.getElementById("normalModeActions").style.display = "none";
+  document.getElementById("pausedModeActions").style.display = "none";
+  renderSplitView();
+  if(splitPollTimer) clearInterval(splitPollTimer);
+  splitPollTimer = setInterval(renderSplitView, 6000);
+}
+
+function exitSplitView(){
+  document.querySelector(".wrap").classList.remove("wide");
+  if(splitPollTimer){ clearInterval(splitPollTimer); splitPollTimer = null; }
+  document.getElementById("splitView").style.display = "none";
+  document.getElementById("singleView").style.display = "block";
+  document.querySelector(".location-bar").style.display = "flex";
+  render();
+}
+
+document.getElementById("backToSingleBtn").addEventListener("click", exitSplitView);
+
+// ---- Status grid ----
+let statusGridPollTimer = null;
+
+function statusTileHtml(r, log){
+  let cls, meta;
+  if(r.status==="active"){
+    cls = "tile-active";
+    meta = "Available";
+  } else if(r.status==="with_client"){
+    cls = "tile-busy";
+    const start = withClientStartFor(r, log);
+    meta = start ? `With client · ${liveTimerSpan(start)}` : "With client";
+  } else if(r.status==="not_checked_in" && r.reason){
+    cls = "tile-out";
+    meta = r.reason;
+  } else {
+    cls = "tile-pending";
+    meta = r.status==="checked_out" ? "Done for day" : "Not checked in";
+  }
+  return `
+    <div class="status-tile ${cls}">
+      <p class="tile-name">${r.name}</p>
+      <p class="tile-meta">${meta}</p>
+    </div>`;
+}
+
+async function renderStatusGrid(){
+  const body = document.getElementById("statusGridBody");
+  if(!body) return;
+  const bodies = await Promise.all(LOCATIONS.map(async loc=>{
+    const s = await loadLocationState(loc.id);
+    return { loc, s };
+  }));
+
+  // same fix as split view — keep the shared state fresh for the currently
+  // selected location so returning to single view isn't stale
+  const currentLocMatch = bodies.find(b=>b.loc.id===currentLocationId);
+  if(currentLocMatch) state = currentLocMatch.s;
+
+  body.innerHTML = bodies.map(({loc, s})=>{
+    const statusRank = { active: 0, with_client: 1, out: 2, not_checked_in: 3, checked_out: 4 };
+    const sorted = [...s.reps].sort((a,b)=>{
+      const ra = statusRank[a.status] ?? 5, rb = statusRank[b.status] ?? 5;
+      if(ra!==rb) return ra-rb;
+      return (a.order||0)-(b.order||0);
+    });
+    return `
+      <div class="status-grid-section">
+        <h4>${loc.name}</h4>
+        <div class="status-grid">
+          ${sorted.length ? sorted.map(r=>statusTileHtml(r, s.log)).join("") : `<div class="empty">No reps yet.</div>`}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function enterStatusGrid(){
+  closeModal();
+  document.querySelector(".wrap").classList.add("wide");
+  document.getElementById("singleView").style.display = "none";
+  document.getElementById("statusGridView").style.display = "block";
+  document.querySelector(".location-bar").style.display = "none";
+  document.getElementById("normalModeActions").style.display = "none";
+  document.getElementById("pausedModeActions").style.display = "none";
+  renderStatusGrid();
+  if(statusGridPollTimer) clearInterval(statusGridPollTimer);
+  statusGridPollTimer = setInterval(renderStatusGrid, 6000);
+}
+
+function exitStatusGrid(){
+  document.querySelector(".wrap").classList.remove("wide");
+  if(statusGridPollTimer){ clearInterval(statusGridPollTimer); statusGridPollTimer = null; }
+  document.getElementById("statusGridView").style.display = "none";
+  document.getElementById("singleView").style.display = "block";
+  document.querySelector(".location-bar").style.display = "flex";
+  render();
+}
+
+document.getElementById("backToSingleFromGridBtn").addEventListener("click", exitStatusGrid);
+
+async function init(){
+  let preferred = LOCATIONS[0].id;
+  try{
+    const res = await storageGet("preferred_location", false);
+    if(res && res.value && LOCATIONS.some(l=>l.id===res.value)) preferred = res.value;
+  }catch(e){}
+
+  try{
+    const repRes = await storageGet("preferred_rep_id", false);
+    if(repRes && repRes.value) preferredRepId = repRes.value;
+  }catch(e){}
+
+  try{
+    const tokenRes = await storageGet("device_token", false);
+    if(tokenRes && tokenRes.value){
+      deviceToken = tokenRes.value;
+    } else {
+      deviceToken = "dev_" + Date.now() + "_" + Math.random().toString(36).slice(2,10);
+      await storageSet("device_token", deviceToken, false);
+    }
+  }catch(e){
+    deviceToken = "dev_fallback_" + Math.random().toString(36).slice(2,10);
+  }
+
+  await switchLocation(preferred);
+
+  setInterval(pollLocationState, 8000); // keep the main board in sync with other devices
+  setInterval(tickLiveTimers, 1000); // tick coverage/with-client durations locally, no network needed
+}
+
+const POLL_WRITE_COOLDOWN_MS = 4000; // skip a poll this soon after our own save, so a GET that was
+// already in flight when we wrote can't land afterward and revert our own fresh change
+
+async function pollLocationState(){
+  if(!state) return;
+  if(pendingLocalWrite) return; // a save from this device is still in flight — don't race it
+  if(Date.now() - lastLocalWriteAt < POLL_WRITE_COOLDOWN_MS) return; // give our last save time to fully land
+  const splitViewEl = document.getElementById("splitView");
+  if(splitViewEl && splitViewEl.style.display !== "none") return; // split view already polls itself
+  const modalRootEl = document.getElementById("modalRoot");
+  if(modalRootEl && modalRootEl.innerHTML.trim() !== "") return; // don't sync out from under an open form
+  try{
+    state = await loadLocationState(currentLocationId);
+    render();
+  }catch(e){ console.error("Poll error", e); }
+}
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "visible"){
+    // a device coming back from being backgrounded/locked may have missed
+    // several poll cycles (mobile browsers throttle timers aggressively
+    // when hidden) — force an immediate fresh check rather than waiting
+    // for the next scheduled tick, so a stale lock or stale button state
+    // never lingers until someone notices and resets the whole day.
+    // Re-render from local state first — this alone re-evaluates the lock
+    // timeout against the real current time with no network dependency,
+    // so a stuck "Take next up" button can un-stick itself instantly even
+    // before the fresh fetch below completes.
+    if(state) render();
+    pollLocationState();
+  }
+});
+init();
+</script>
+</body>
+</html>
